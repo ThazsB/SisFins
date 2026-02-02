@@ -1,8 +1,8 @@
 {
-  "name": "fins",
+  "name": "sisfins",
   "private": true,
-  "version": "0.0.0",
-  "homepage": "https://thazsb.github.io/EcoFinace/",
+  "version": "1.0.1",
+  "homepage": "https://thazsb.github.io/SisFins/",
   "type": "module",
   "scripts": {
     "dev": "vite --port 48367",
