@@ -1,7 +1,7 @@
 import Dexie, { Table } from 'dexie';
 import { Profile, Transaction, Budget, Goal, Notification, AppData } from '@/types';
 
-class EcoFinanceDB extends Dexie {
+class FinsDB extends Dexie {
   profiles!: Table<Profile>;
   transactions!: Table<Transaction>;
   budgets!: Table<Budget>;
@@ -10,7 +10,7 @@ class EcoFinanceDB extends Dexie {
   categories!: Table<{ id: number; name: string; profileId: string }>;
 
   constructor() {
-    super('EcoFinanceDB');
+    super('FinsDB');
     this.version(1).stores({
       profiles: 'id, name, avatar, color, passwordHash, createdAt, lastAccess',
       transactions: 'id, desc, amount, type, category, date, profileId',
@@ -22,7 +22,7 @@ class EcoFinanceDB extends Dexie {
   }
 }
 
-export const db = new EcoFinanceDB();
+export const db = new FinsDB();
 
 // Migration from localStorage to Dexie
 export async function migrateLocalStorage() {

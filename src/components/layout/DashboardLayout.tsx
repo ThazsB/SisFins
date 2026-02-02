@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Target, Flag, BarChart3, Settings, PieChart, Bell } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, Target, Flag, BarChart3, Settings, Bell } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotificationsStore } from '@/stores/notificationsStore'
 import { NotificationCenter } from '@/components/NotificationCenter'
+import { Logo } from '@/components/ui/Logo'
 
 const navItems = [
   { name: 'Painel', icon: LayoutDashboard, href: '/dashboard' },
@@ -26,10 +27,7 @@ export function DashboardLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <PieChart className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">Finanças<span className="text-primary">EmDia</span></span>
-          </div>
+          <Logo size="lg" />
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -52,8 +50,12 @@ export function DashboardLayout() {
         <div className="p-4 border-t border-border">
           <div className="bg-muted p-3 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xl">{user?.avatar || '👤'}</span>
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                {user?.avatar?.startsWith('data:image/') ? (
+                  <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl">{user?.avatar || '👤'}</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.name || 'Carregando...'}</p>

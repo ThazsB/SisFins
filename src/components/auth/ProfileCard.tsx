@@ -84,8 +84,7 @@ export function ProfileCard({ profile, isSelected, isLastAccess, onClick, onDele
           style={{ backgroundColor: `${profile.color}20` }}
           animate={isSelected ? { scale: [1, 1.1, 1] } : {}}
           transition={{ duration: 0.5 }}
-        >
-          {profile.avatar}
+        >{profile.avatar.startsWith('data:image/') ? (<img src={profile.avatar} alt="" />) : profile.avatar}
         </motion.div>
 
         {/* Indicador de último acesso - posicionado antes do nome */}

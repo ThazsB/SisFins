@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { data, init } = useAppStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -17,6 +19,7 @@ export default function Settings() {
   const handleLogout = () => {
     if (confirm('Tem certeza que deseja sair?')) {
       logout();
+      navigate('/profile-selection', { replace: true });
     }
   };
 
@@ -34,8 +37,12 @@ export default function Settings() {
         <h2 className="text-lg font-semibold mb-4">Perfil</h2>
         
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-4xl">
-            {user?.avatar || '👤'}
+          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-4xl overflow-hidden">
+            {user?.avatar?.startsWith('data:image/') ? (
+              <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span>{user?.avatar || '👤'}</span>
+            )}
           </div>
           
           <div>
