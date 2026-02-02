@@ -1,49 +1,61 @@
 {
-  "hash": "d507e312",
+  "hash": "fd72f7f6",
   "configHash": "43685558",
-  "lockfileHash": "116a536c",
-  "browserHash": "9c8f06f8",
+  "lockfileHash": "d3da598c",
+  "browserHash": "1a3dc474",
   "optimized": {
     "@emotion/is-prop-valid": {
       "src": "../../node_modules/@emotion/is-prop-valid/dist/is-prop-valid.browser.esm.js",
       "file": "@emotion_is-prop-valid.js",
-      "fileHash": "4727b0b6",
+      "fileHash": "e3b1ef97",
       "needsInterop": false
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "ad146009",
+      "needsInterop": true
     },
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "e4208c7a",
+      "fileHash": "a2120a59",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "4651427c",
+      "fileHash": "d02faf51",
       "needsInterop": true
     },
     "react-router-dom": {
       "src": "../../node_modules/react-router-dom/dist/index.js",
       "file": "react-router-dom.js",
-      "fileHash": "fa617d1a",
+      "fileHash": "503a9531",
       "needsInterop": false
     },
     "framer-motion": {
       "src": "../../node_modules/framer-motion/dist/es/index.mjs",
       "file": "framer-motion.js",
-      "fileHash": "415f353d",
+      "fileHash": "f452d006",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "bb1568bc",
       "needsInterop": false
     },
     "react-chartjs-2": {
       "src": "../../node_modules/react-chartjs-2/dist/index.js",
       "file": "react-chartjs-2.js",
-      "fileHash": "65d823d7",
+      "fileHash": "86834d11",
       "needsInterop": false
     },
     "chart.js": {
       "src": "../../node_modules/chart.js/dist/chart.js",
       "file": "chart__js.js",
-      "fileHash": "10e9fbb0",
+      "fileHash": "debbe897",
       "needsInterop": false
     }
   },
@@ -51,14 +63,14 @@
     "chunk-UHINIFCJ": {
       "file": "chunk-UHINIFCJ.js"
     },
+    "chunk-KWT2DJ4I": {
+      "file": "chunk-KWT2DJ4I.js"
+    },
     "chunk-W4EHDCLL": {
       "file": "chunk-W4EHDCLL.js"
     },
     "chunk-4PGPD6VS": {
       "file": "chunk-4PGPD6VS.js"
-    },
-    "chunk-KWT2DJ4I": {
-      "file": "chunk-KWT2DJ4I.js"
     },
     "chunk-EWTE5DHJ": {
       "file": "chunk-EWTE5DHJ.js"

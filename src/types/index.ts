@@ -1,3 +1,6 @@
+export * from './notifications';
+export * from './notification-preferences';
+
 export interface Profile {
   id: string;
   name: string;
@@ -134,72 +137,6 @@ export interface PredictiveData {
   willExceed: boolean;
   exceedAmount?: number;
   daysUntilExceed?: number;
-}
-
-/**
- * Configuração de preferências do usuário para notificações
- */
-
-/**
- * Configurações de preferências do usuário para notificações
- */
-export interface NotificationPreferences {
-  /** Categorias ativadas para receber notificações */
-  enabledCategories: NotificationCategory[];
-  
-  /** Horário de início do silêncio (ex: "22:00") */
-  quietHoursStart: string;
-  
-  /** Horário de fim do silêncio (ex: "08:00") */
-  quietHoursEnd: string;
-  
-  /** Se o som está ativado */
-  soundEnabled: boolean;
-  
-  /** Se as notificações toast estão ativadas */
-  toastEnabled: boolean;
-  
-  /** Se deve mostrar prévia da mensagem */
-  showPreview: boolean;
-}
-
-/**
- * Configuração padrão de preferências
- */
-export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  enabledCategories: ['financeira', 'lembrete', 'relatorio', 'sistema', 'insight'],
-  quietHoursStart: '22:00',
-  quietHoursEnd: '08:00',
-  soundEnabled: true,
-  toastEnabled: true,
-  showPreview: true,
-};
-
-export type NotificationPriority = 'high' | 'normal' | 'low';
-
-/**
- * Notificação do sistema
- */
-export interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: NotificationType;
-  category: NotificationCategory;
-  priority?: NotificationPriority;
-  date: string;
-  read: boolean;
-  archived?: boolean;
-  snoozedUntil?: string;
-  profileId: string;
-}
-
-export interface AppData {
-  transactions: Transaction[];
-  budgets: Budget[];
-  goals: Goal[];
-  categories: string[];
-  notifications: Notification[];
 }
 
 export const AVAILABLE_AVATARS = [

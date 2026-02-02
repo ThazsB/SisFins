@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Target, Flag, BarChart3, Settings } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, Target, Flag, BarChart3, Settings, Bell, Plus } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotificationsStore } from '@/stores/notificationsStore'
 import { Logo } from '@/components/ui/Logo'
 
 const navItems = [
@@ -18,6 +19,27 @@ export function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { unreadCount, openCenter, addNotification, updatePreferences } = useNotificationsStore()
+
+  // Inicializar profileId quando o usuário for carregado
+  useEffect(() => {
+    if (user?.id) {
+      updatePreferences({ profileId: user.id, userId: user.id });
+    }
+  }, [user?.id, updatePreferences]);
+
+  // Função para adicionar notificação de teste
+  const addTestNotification = () => {
+    addNotification({
+      profileId: user?.id || 'default',
+      title: 'Notificação de Teste',
+      message: 'Esta é uma notificação de teste para verificar se o sistema está funcionando.',
+      category: 'system',
+      priority: 'normal',
+      channels: ['in_app'],
+      data: { test: true },
+    });
+  };
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -73,6 +95,29 @@ export function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Notification Bell */}
+            <button
+              onClick={openCenter}
+              className="relative p-2 hover:bg-accent rounded-lg transition-colors"
+              title="Notificações"
+            >
+              <Bell className="h-5 w-5 text-muted-foreground" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] text-xs font-bold text-primary-foreground bg-primary rounded-full px-1 animate-pulse">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+            
+            {/* Botão de teste */}
+            <button
+              onClick={addTestNotification}
+              className="p-2 hover:bg-accent rounded-lg transition-colors"
+              title="Testar notificação"
+            >
+              <Plus className="h-5 w-5 text-muted-foreground" />
+            </button>
+            
             {/* New Transaction Button */}
             {location.pathname !== '/transactions' && (
               <button

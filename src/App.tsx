@@ -11,6 +11,8 @@ import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { AnimatePresence } from 'framer-motion'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
+import { ToastContainer } from '@/components/notifications/ToastContainer'
+import { NotificationCenter } from '@/components/notifications/NotificationCenter'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth()
@@ -79,6 +81,10 @@ function App() {
           </Routes>
         </AnimatePresence>
       </HashRouter>
+      
+      {/* Notification Components */}
+      <ToastContainer />
+      <NotificationCenter />
     </AuthProvider>
   )
 }

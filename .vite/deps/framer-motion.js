@@ -1,10 +1,10 @@
 import {
-  require_react
-} from "./chunk-W4EHDCLL.js";
-import {
   init_is_prop_valid_browser_esm,
   is_prop_valid_browser_esm_exports
 } from "./chunk-KWT2DJ4I.js";
+import {
+  require_react
+} from "./chunk-W4EHDCLL.js";
 import {
   __toCommonJS,
   __toESM
