@@ -1,6 +1,6 @@
 {
-  "name": "EcoFinance",
-  "short_name": "EcoFinance",
+  "name": "Fins",
+  "short_name": "Fins",
   "description": "Gerenciador financeiro pessoal",
   "start_url": "/",
   "display": "standalone",
