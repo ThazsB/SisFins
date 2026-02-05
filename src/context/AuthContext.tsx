@@ -36,78 +36,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [profiles]); // Depende de profiles para garantir que sejam carregados
 
-        // Resetar perfil ativo quando o usuário fechar o site
+                // Handle page close detection without affecting refresh
   useEffect(() => {
-    const PROFILE_KEY = 'ecofinance_active_profile';
-    const TIMESTAMP_KEY = 'ecofinance_profile_timestamp';
-    
-    // Verificar se a página foi reaberta após um tempo de inatividade
-    const checkAndClearProfile = () => {
-      const timestamp = localStorage.getItem(TIMESTAMP_KEY);
-      const profileActive = localStorage.getItem(PROFILE_KEY);
-      
-      if (profileActive && timestamp) {
-        const lastActivity = parseInt(timestamp);
-        const now = Date.now();
-        const timeDiff = now - lastActivity;
+    const handleBeforeUnload = () => {
+      // Mark the time when page is being unloaded
+      localStorage.setItem('ecofinance_last_unload_time', Date.now().toString());
+    };
+
+    const checkPageClose = () => {
+      const lastUnloadTime = localStorage.getItem('ecofinance_last_unload_time');
+      if (lastUnloadTime) {
+        const timeDiff = Date.now() - parseInt(lastUnloadTime);
+        localStorage.removeItem('ecofinance_last_unload_time');
         
-        // Se passaram mais de 30 segundos desde a última atividade, limpar o perfil
-        if (timeDiff > 30000) {
-          console.log('[AuthContext] Clearing profile due to inactivity:', timeDiff, 'ms');
-          localStorage.removeItem(PROFILE_KEY);
-          localStorage.removeItem(TIMESTAMP_KEY);
+        // If more than 5 seconds passed since unload, it was likely a real close
+        // If less than 5 seconds, it was likely a refresh
+        if (timeDiff > 5000) {
+          console.log('[AuthContext] Page was closed, clearing session');
+          localStorage.removeItem('ecofinance_active_profile');
           sessionStorage.removeItem('welcome_shown');
           useAuthStore.setState({ user: null });
+        } else {
+          console.log('[AuthContext] Page was refreshed, keeping session');
         }
       }
     };
 
-    // Atualizar timestamp a cada 5 segundos se há perfil ativo
-    const updateTimestamp = () => {
-      const profileActive = localStorage.getItem(PROFILE_KEY);
-      if (profileActive) {
-        localStorage.setItem(TIMESTAMP_KEY, Date.now().toString());
-      }
-    };
+    // Check on page load if there was a previous unload
+    checkPageClose();
 
-    const handleBeforeUnload = () => {
-      console.log('[AuthContext] BeforeUnload event fired - clearing profile');
-      localStorage.removeItem(PROFILE_KEY);
-      localStorage.removeItem(TIMESTAMP_KEY);
-      sessionStorage.removeItem('welcome_shown');
-      useAuthStore.setState({ user: null });
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        console.log('[AuthContext] Page hidden');
-        // Não limpar imediatamente para não interferir com navegação entre abas
-        // Apenas atualizar que a página ficou oculta
-      } else if (document.visibilityState === 'visible') {
-        console.log('[AuthContext] Page visible - checking profile');
-        // Verificar se deve limpar o perfil ao voltar a visualizar a página
-        checkAndClearProfile();
-      }
-    };
-
-    // Verificar perfil ao carregar a página
-    checkAndClearProfile();
-    
-    // Adicionar listeners
+    // Add listener for page unload
     window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('pagehide', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Atualizar timestamp periodicamente
-    const timestampInterval = setInterval(updateTimestamp, 5000);
 
-    console.log('[AuthContext] Added unload listeners and profile monitoring');
+    console.log('[AuthContext] Added page close detection');
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('pagehide', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(timestampInterval);
     };
   }, [profiles]); // Depende de profiles para garantir que sejam carregados
 
