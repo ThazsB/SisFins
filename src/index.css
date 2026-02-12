@@ -7,36 +7,120 @@
 
 @layer base {
   :root {
-    /* Midnight Slate Palette */
-    --background: 222.2 84% 5%;
-    --foreground: 210 40% 98%;
+    /* Dark Theme - rgb(29, 29, 29) */
+    --background: 29, 29, 29;
+    --foreground: 255, 255, 255;
 
-    --card: 222.2 84% 7%;
-    --card-foreground: 210 40% 98%;
+    /* Cards - Slightly lighter than background */
+    --card: 38, 38, 38;
+    --card-foreground: 255, 255, 255;
 
-    --popover: 222.2 84% 7%;
-    --popover-foreground: 210 40% 98%;
+    /* Popover */
+    --popover: 29, 29, 29;
+    --popover-foreground: 255, 255, 255;
 
-    --primary: 25 78% 60%;
-    --primary-foreground: 0 0% 98%;
+    /* Primary - Slate blue accent */
+    --primary: 90, 113, 131;
+    --primary-foreground: 255, 255, 255;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary */
+    --secondary: 64, 64, 64;
+    --secondary-foreground: 255, 255, 255;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted */
+    --muted: 64, 64, 64;
+    --muted-foreground: 200, 200, 200;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent */
+    --accent: 90, 113, 131;
+    --accent-foreground: 255, 255, 255;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive */
+    --destructive: 220, 38, 38;
+    --destructive-foreground: 255, 255, 255;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 25 78% 60%;
+    /* Border */
+    --border: 64, 64, 64;
+    --input: 64, 64, 64;
+    --ring: 90, 113, 131;
 
-    --radius: 0.5rem;
+    /* Slate colors for accents */
+    --slate: 90, 113, 131;
+    --slate-light: 120, 140, 160;
+    --slate-dark: 60, 80, 100;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer utilities {
+  /* Background utilities */
+  .bg-background {
+    background-color: rgba(var(--background), 1);
+  }
+
+  .bg-card {
+    background-color: rgba(var(--card), 1);
+    border: 1px solid rgba(var(--border), 0.3);
+  }
+
+  .bg-popover {
+    background-color: rgba(var(--popover), 1);
+  }
+
+  .bg-primary {
+    background-color: rgba(var(--primary), 1);
+  }
+
+  .bg-secondary {
+    background-color: rgba(var(--secondary), 1);
+  }
+
+  .bg-muted {
+    background-color: rgba(var(--muted), 1);
+  }
+
+  .bg-accent {
+    background-color: rgba(var(--accent), 1);
+  }
+
+  .text-foreground {
+    color: rgba(var(--foreground), 1);
+  }
+
+  .text-muted-foreground {
+    color: rgba(var(--muted-foreground), 1);
+  }
+
+  .border-border {
+    border-color: rgba(var(--border), 1);
+  }
+
+  .text-slate {
+    color: rgba(var(--slate), 1);
+  }
+
+  .text-slate-light {
+    color: rgba(var(--slate-light), 1);
+  }
+
+  .ring-ring {
+    ring-color: rgba(var(--ring), 1);
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, rgba(var(--background), 1) 0%, rgba(64, 64, 64, 0.5) 100%);
+  }
+
+  .bg-gradient-card {
+    background: linear-gradient(135deg, rgba(var(--card), 1) 0%, rgba(64, 64, 64, 0.8) 100%);
+  }
+
+  /* Backdrop blur overlay */
+  .backdrop-dark {
+    backdrop-filter: blur(12px);
+    background-color: rgba(var(--background), 0.85);
   }
 }
 

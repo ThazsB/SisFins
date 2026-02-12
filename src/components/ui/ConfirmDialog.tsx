@@ -4,10 +4,19 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, AlertTriangle, Trash2, TrendingUp, TrendingDown, Target, Wallet } from 'lucide-react';
+import {
+  X,
+  AlertTriangle,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Wallet,
+  LogOut,
+} from 'lucide-react';
 
 // Tipos de confirmação
-export type ConfirmType = 'transaction' | 'goal' | 'budget' | 'generic';
+export type ConfirmType = 'transaction' | 'goal' | 'budget' | 'logout' | 'generic';
 
 // Props do componente
 interface ConfirmDialogProps {
@@ -40,6 +49,8 @@ const getTypeIcon = (type: ConfirmType) => {
       return <Target className="w-6 h-6 text-orange-500" />;
     case 'budget':
       return <Wallet className="w-6 h-6 text-green-500" />;
+    case 'logout':
+      return <LogOut className="w-6 h-6 text-blue-500" />;
     default:
       return <AlertTriangle className="w-6 h-6 text-yellow-500" />;
   }
@@ -71,6 +82,14 @@ const getTypeConfig = (type: ConfirmType) => {
         bgColor: 'bg-green-500/10',
         borderColor: 'border-green-500/30',
         iconBg: 'bg-green-500/20',
+      };
+    case 'logout':
+      return {
+        title: 'Sair da Conta',
+        icon: <LogOut className="w-6 h-6 text-blue-500" />,
+        bgColor: 'bg-blue-500/10',
+        borderColor: 'border-blue-500/30',
+        iconBg: 'bg-blue-500/20',
       };
     default:
       return {

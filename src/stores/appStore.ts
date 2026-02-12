@@ -1,5 +1,12 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { Transaction, Budget, Goal, AppData, DEFAULT_CATEGORIES, FixedExpense } from '@/types';
+import {
+  getTransactionsKey,
+  getBudgetsKey,
+  getGoalsKey,
+  getCategoriesKey,
+  PROFILE_STORAGE_KEY,
+} from '@/config/storage';
 
 interface AppState {
   data: Omit<AppData, 'notifications'> & { fixedExpenses: FixedExpense[] };
@@ -46,16 +53,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true });
     try {
       // Load data from localStorage
-      const transactions = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'
-      );
-      const budgets = JSON.parse(localStorage.getItem(`ecofinance_${profileId}_budgets`) || '[]');
-      const goals = JSON.parse(localStorage.getItem(`ecofinance_${profileId}_goals`) || '[]');
-      const categories = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_categories`) || '[]'
-      );
+      const transactions = JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]');
+      const budgets = JSON.parse(localStorage.getItem(getBudgetsKey(profileId)) || '[]');
+      const goals = JSON.parse(localStorage.getItem(getGoalsKey(profileId)) || '[]');
+      const categories = JSON.parse(localStorage.getItem(getCategoriesKey(profileId)) || '[]');
       const fixedExpenses = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_fixedExpenses`) || '[]'
+        localStorage.getItem(`fins_profile_${profileId}_fixedExpenses`) || '[]'
       );
 
       // Backwards-compat: also read legacy categories stored by the older categoriesStore
@@ -94,10 +97,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       // Persist merged categories back to ecofinance key so selects read the unified list
       try {
-        localStorage.setItem(
-          `ecofinance_${profileId}_categories`,
-          JSON.stringify(mergedCategories)
-        );
+        localStorage.setItem(getCategoriesKey(profileId), JSON.stringify(mergedCategories));
       } catch (e) {
         // ignore storage errors
       }
@@ -112,7 +112,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const newTransaction: Transaction = {
       ...transaction,
       id: Date.now(),
-      profileId: localStorage.getItem('ecofinance_active_profile') || '',
+      profileId: localStorage.getItem(PROFILE_STORAGE_KEY) || '',
     };
 
     set((state) => ({
@@ -122,13 +122,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'
-      );
+      const currentData = JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]');
       localStorage.setItem(
-        `ecofinance_${profileId}_transactions`,
+        getTransactionsKey(profileId),
         JSON.stringify([...currentData, newTransaction])
       );
     }
@@ -144,13 +142,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'
-      );
+      const currentData = JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]');
       localStorage.setItem(
-        `ecofinance_${profileId}_transactions`,
+        getTransactionsKey(profileId),
         JSON.stringify(currentData.filter((tx: Transaction) => tx.id !== id))
       );
     }
@@ -161,7 +157,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       ...goal,
       id: Date.now(),
       current: 0,
-      profileId: localStorage.getItem('ecofinance_active_profile') || '',
+      profileId: localStorage.getItem(PROFILE_STORAGE_KEY) || '',
     };
 
     set((state) => ({
@@ -171,13 +167,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(localStorage.getItem(`ecofinance_${profileId}_goals`) || '[]');
-      localStorage.setItem(
-        `ecofinance_${profileId}_goals`,
-        JSON.stringify([...currentData, newGoal])
-      );
+      const currentData = JSON.parse(localStorage.getItem(getGoalsKey(profileId)) || '[]');
+      localStorage.setItem(getGoalsKey(profileId), JSON.stringify([...currentData, newGoal]));
     }
 
     return newGoal;
@@ -196,13 +189,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(localStorage.getItem(`ecofinance_${profileId}_goals`) || '[]');
+      const currentData = JSON.parse(localStorage.getItem(getGoalsKey(profileId)) || '[]');
       const updatedGoals = currentData.map((goal: Goal) =>
         goal.id === id ? { ...goal, ...updatedGoal } : goal
       );
-      localStorage.setItem(`ecofinance_${profileId}_goals`, JSON.stringify(updatedGoals));
+      localStorage.setItem(getGoalsKey(profileId), JSON.stringify(updatedGoals));
     }
 
     const updated = get().data.goals.find((goal: Goal) => goal.id === id);
@@ -217,11 +210,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(localStorage.getItem(`ecofinance_${profileId}_goals`) || '[]');
+      const currentData = JSON.parse(localStorage.getItem(getGoalsKey(profileId)) || '[]');
       localStorage.setItem(
-        `ecofinance_${profileId}_goals`,
+        getGoalsKey(profileId),
         JSON.stringify(currentData.filter((goal: Goal) => goal.id !== id))
       );
     }
@@ -239,7 +232,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   addBudget: async (budget) => {
     const newBudget: Budget = {
       ...budget,
-      profileId: localStorage.getItem('ecofinance_active_profile') || '',
+      profileId: localStorage.getItem(PROFILE_STORAGE_KEY) || '',
     };
 
     set((state) => ({
@@ -249,15 +242,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_budgets`) || '[]'
-      );
-      localStorage.setItem(
-        `ecofinance_${profileId}_budgets`,
-        JSON.stringify([...currentData, newBudget])
-      );
+      const currentData = JSON.parse(localStorage.getItem(getBudgetsKey(profileId)) || '[]');
+      localStorage.setItem(getBudgetsKey(profileId), JSON.stringify([...currentData, newBudget]));
     }
   },
 
@@ -285,12 +273,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const [currentBudgets, currentTransactions, currentCategories] = await Promise.all([
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_budgets`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_categories`) || '[]'),
+        JSON.parse(localStorage.getItem(getBudgetsKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getCategoriesKey(profileId)) || '[]'),
       ]);
 
       const updatedBudgets = currentBudgets.map((budget: Budget) =>
@@ -306,15 +294,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       );
 
       await Promise.all([
-        localStorage.setItem(`ecofinance_${profileId}_budgets`, JSON.stringify(updatedBudgets)),
-        localStorage.setItem(
-          `ecofinance_${profileId}_transactions`,
-          JSON.stringify(updatedTransactions)
-        ),
-        localStorage.setItem(
-          `ecofinance_${profileId}_categories`,
-          JSON.stringify(updatedCategories)
-        ),
+        localStorage.setItem(getBudgetsKey(profileId), JSON.stringify(updatedBudgets)),
+        localStorage.setItem(getTransactionsKey(profileId), JSON.stringify(updatedTransactions)),
+        localStorage.setItem(getCategoriesKey(profileId), JSON.stringify(updatedCategories)),
       ]);
     }
   },
@@ -337,12 +319,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const [currentBudgets, currentTransactions, currentCategories] = await Promise.all([
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_budgets`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_categories`) || '[]'),
+        JSON.parse(localStorage.getItem(getBudgetsKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getCategoriesKey(profileId)) || '[]'),
       ]);
 
       const updatedBudgets = currentBudgets.filter(
@@ -354,15 +336,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       const updatedCategories = currentCategories.filter((cat: string) => cat !== category);
 
       await Promise.all([
-        localStorage.setItem(`ecofinance_${profileId}_budgets`, JSON.stringify(updatedBudgets)),
-        localStorage.setItem(
-          `ecofinance_${profileId}_transactions`,
-          JSON.stringify(updatedTransactions)
-        ),
-        localStorage.setItem(
-          `ecofinance_${profileId}_categories`,
-          JSON.stringify(updatedCategories)
-        ),
+        localStorage.setItem(getBudgetsKey(profileId), JSON.stringify(updatedBudgets)),
+        localStorage.setItem(getTransactionsKey(profileId), JSON.stringify(updatedTransactions)),
+        localStorage.setItem(getCategoriesKey(profileId), JSON.stringify(updatedCategories)),
       ]);
     }
   },
@@ -383,13 +359,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
-      const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_categories`) || '[]'
-      );
+      const currentData = JSON.parse(localStorage.getItem(getCategoriesKey(profileId)) || '[]');
       localStorage.setItem(
-        `ecofinance_${profileId}_categories`,
+        getCategoriesKey(profileId),
         JSON.stringify([...currentData, trimmedName])
       );
     }
@@ -419,12 +393,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const [currentCategories, currentTransactions, currentBudgets] = await Promise.all([
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_categories`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_budgets`) || '[]'),
+        JSON.parse(localStorage.getItem(getCategoriesKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getBudgetsKey(profileId)) || '[]'),
       ]);
 
       const updatedCategories = currentCategories.filter((cat: string) => cat !== categoryName);
@@ -436,15 +410,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       );
 
       await Promise.all([
-        localStorage.setItem(
-          `ecofinance_${profileId}_categories`,
-          JSON.stringify(updatedCategories)
-        ),
-        localStorage.setItem(
-          `ecofinance_${profileId}_transactions`,
-          JSON.stringify(updatedTransactions)
-        ),
-        localStorage.setItem(`ecofinance_${profileId}_budgets`, JSON.stringify(updatedBudgets)),
+        localStorage.setItem(getCategoriesKey(profileId), JSON.stringify(updatedCategories)),
+        localStorage.setItem(getTransactionsKey(profileId), JSON.stringify(updatedTransactions)),
+        localStorage.setItem(getBudgetsKey(profileId), JSON.stringify(updatedBudgets)),
       ]);
     }
   },
@@ -483,12 +451,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const [currentCategories, currentTransactions, currentBudgets] = await Promise.all([
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_categories`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_transactions`) || '[]'),
-        JSON.parse(localStorage.getItem(`ecofinance_${profileId}_budgets`) || '[]'),
+        JSON.parse(localStorage.getItem(getCategoriesKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getTransactionsKey(profileId)) || '[]'),
+        JSON.parse(localStorage.getItem(getBudgetsKey(profileId)) || '[]'),
       ]);
 
       const updatedCategories = currentCategories.map((cat: string) =>
@@ -504,27 +472,24 @@ export const useAppStore = create<AppState>((set, get) => ({
       );
 
       await Promise.all([
-        localStorage.setItem(
-          `ecofinance_${profileId}_categories`,
-          JSON.stringify(updatedCategories)
-        ),
-        localStorage.setItem(
-          `ecofinance_${profileId}_transactions`,
-          JSON.stringify(updatedTransactions)
-        ),
-        localStorage.setItem(`ecofinance_${profileId}_budgets`, JSON.stringify(updatedBudgets)),
+        localStorage.setItem(getCategoriesKey(profileId), JSON.stringify(updatedCategories)),
+        localStorage.setItem(getTransactionsKey(profileId), JSON.stringify(updatedTransactions)),
+        localStorage.setItem(getBudgetsKey(profileId), JSON.stringify(updatedBudgets)),
       ]);
     }
   },
 
-  // Métodos para valores fixos
+  getValidCategories: () => {
+    return [...DEFAULT_CATEGORIES, ...get().data.categories];
+  },
+
   addFixedExpense: async (fixedExpense) => {
     const newFixedExpense: FixedExpense = {
       ...fixedExpense,
       id: Date.now(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      profileId: localStorage.getItem('ecofinance_active_profile') || '',
+      profileId: localStorage.getItem(PROFILE_STORAGE_KEY) || '',
     };
 
     set((state) => ({
@@ -534,13 +499,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_fixedExpenses`) || '[]'
+        localStorage.getItem(`fins_profile_${profileId}_fixedExpenses`) || '[]'
       );
       localStorage.setItem(
-        `ecofinance_${profileId}_fixedExpenses`,
+        `fins_profile_${profileId}_fixedExpenses`,
         JSON.stringify([...currentData, newFixedExpense])
       );
     }
@@ -555,7 +520,6 @@ export const useAppStore = create<AppState>((set, get) => ({
           ? { ...expense, ...updatedFixedExpense, updatedAt: new Date().toISOString() }
           : expense
       );
-
       return {
         data: {
           ...state.data,
@@ -564,17 +528,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_fixedExpenses`) || '[]'
+        localStorage.getItem(`fins_profile_${profileId}_fixedExpenses`) || '[]'
       );
       const updatedData = currentData.map((expense: FixedExpense) =>
         expense.id === id
           ? { ...expense, ...updatedFixedExpense, updatedAt: new Date().toISOString() }
           : expense
       );
-      localStorage.setItem(`ecofinance_${profileId}_fixedExpenses`, JSON.stringify(updatedData));
+      localStorage.setItem(`fins_profile_${profileId}_fixedExpenses`, JSON.stringify(updatedData));
     }
 
     const updated = get().data.fixedExpenses.find((expense: FixedExpense) => expense.id === id);
@@ -591,13 +555,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
-    const profileId = localStorage.getItem('ecofinance_active_profile');
+    const profileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (profileId) {
       const currentData = JSON.parse(
-        localStorage.getItem(`ecofinance_${profileId}_fixedExpenses`) || '[]'
+        localStorage.getItem(`fins_profile_${profileId}_fixedExpenses`) || '[]'
       );
       const updatedData = currentData.filter((expense: FixedExpense) => expense.id !== id);
-      localStorage.setItem(`ecofinance_${profileId}_fixedExpenses`, JSON.stringify(updatedData));
+      localStorage.setItem(`fins_profile_${profileId}_fixedExpenses`, JSON.stringify(updatedData));
     }
   },
 
@@ -610,10 +574,5 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   getActiveFixedExpenses: () => {
     return get().data.fixedExpenses.filter((expense: FixedExpense) => expense.active);
-  },
-
-  getValidCategories: () => {
-    const merged = Array.from(new Set([...DEFAULT_CATEGORIES, ...get().data.categories]));
-    return merged.sort((a, b) => a.localeCompare(b, 'pt-BR'));
   },
 }));

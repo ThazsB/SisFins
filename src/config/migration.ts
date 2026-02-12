@@ -92,14 +92,28 @@ export function migrateProfiles(): void {
  * Migra dados de um perfil específico
  */
 export function migrateProfileData(profileId: string): void {
-  const oldTransactions = localStorage.getItem(`ecofinance_${profileId}_transactions`);
-  const newTransactions = localStorage.getItem(`fins_profile_${profileId}_transactions`);
+  const dataTypes = [
+    'transactions',
+    'budgets',
+    'goals',
+    'categories',
+    'notifications',
+    'fixedExpenses',
+  ];
 
-  if (oldTransactions && !newTransactions) {
-    console.log(`[Migration] Migrando dados do perfil ${profileId}`);
-    localStorage.setItem(`fins_profile_${profileId}_transactions`, oldTransactions);
-    localStorage.setItem(`fins_profile_${profileId}_transactions_version`, '1');
-  }
+  dataTypes.forEach((type) => {
+    const oldKey = `ecofinance_${profileId}_${type}`;
+    const newKey = `fins_profile_${profileId}_${type}`;
+
+    const oldData = localStorage.getItem(oldKey);
+    const newData = localStorage.getItem(newKey);
+
+    if (oldData && !newData) {
+      console.log(`[Migration] Migrando ${type} do perfil ${profileId}`);
+      localStorage.setItem(newKey, oldData);
+      localStorage.setItem(`${newKey}_version`, '1');
+    }
+  });
 }
 
 /**

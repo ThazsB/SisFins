@@ -52,12 +52,8 @@ export function DashboardLayout() {
   useEffect(() => {
     if (user?.id) {
       updatePreferences({ profileId: user.id, userId: user.id });
-      // Redirecionar diretamente para a página de transações para testes
-      if (location.pathname === '/dashboard') {
-        navigate('/transactions');
-      }
     }
-  }, [user?.id, updatePreferences, location.pathname, navigate]);
+  }, [user?.id, updatePreferences]);
 
   // Função para adicionar notificação de teste
   const addTestNotification = () => {

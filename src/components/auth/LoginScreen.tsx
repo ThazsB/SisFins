@@ -7,6 +7,7 @@ import { ProfileCard } from './ProfileCard';
 import { DeleteProfileModal } from './DeleteProfileModal';
 import { useAuthStore } from '../../stores/authStore';
 import type { Profile } from '../../types';
+import { PROFILES_LIST_KEY, PROFILE_STORAGE_KEY } from '../../config/storage';
 
 type AuthView = 'profiles' | 'password' | 'first-access';
 
@@ -34,7 +35,7 @@ export function LoginScreen() {
     hasLoaded.current = true;
 
     try {
-      const savedProfiles = localStorage.getItem('ecofinance_profiles');
+      const savedProfiles = localStorage.getItem(PROFILES_LIST_KEY);
       if (savedProfiles) {
         const parsedProfiles = JSON.parse(savedProfiles);
         setProfiles(parsedProfiles);
@@ -111,7 +112,7 @@ export function LoginScreen() {
 
       const updatedProfiles = profiles.filter((p) => p.id !== profileToDelete);
       setProfiles(updatedProfiles);
-      localStorage.setItem('ecofinance_profiles', JSON.stringify(updatedProfiles));
+      localStorage.setItem(PROFILES_LIST_KEY, JSON.stringify(updatedProfiles));
 
       // Limpar dados do perfil excluído
       localStorage.removeItem(`ecofinance_${profileToDelete}_password`);
@@ -136,7 +137,7 @@ export function LoginScreen() {
 
   // Obter último perfil acessado
   const lastAccessedProfile = useMemo(() => {
-    const activeProfileId = localStorage.getItem('ecofinance_active_profile');
+    const activeProfileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (activeProfileId) {
       return profiles.find((p) => p.id === activeProfileId) || null;
     }
@@ -164,8 +165,8 @@ export function LoginScreen() {
     <div
       className={
         view === 'first-access'
-          ? 'h-screen overflow-hidden bg-neutral-950'
-          : 'h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-orange-900/20 flex items-center justify-center p-6 relative overflow-hidden'
+          ? 'h-screen overflow-hidden bg-background'
+          : 'h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden'
       }
     >
       {view === 'first-access' ? (
@@ -179,28 +180,46 @@ export function LoginScreen() {
         <div className="w-full">
           {/* Elementos decorativos */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-orange-600/5 rounded-full blur-3xl" />
+            <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-slate/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-slate/5 rounded-full blur-3xl" />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/60 via-transparent to-neutral-950/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/30" />
 
-          <div className="relative z-10 w-full flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="relative z-10 w-full flex flex-col items-center"
+          >
             <div className="w-full max-w-4xl flex flex-col items-center">
               {/* Header */}
               <div className="text-center mb-8">
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{
+                    duration: 0.8,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                    delay: 0.1,
+                  }}
                   className="flex flex-col items-center mb-4"
                 >
                   <Logo size="xl" showText={true} />
                 </motion.div>
-                <p className="text-muted-foreground">
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.6,
+                    ease: 'easeOut',
+                    delay: 0.4,
+                  }}
+                  className="text-muted-foreground"
+                >
                   {view === 'password' && selectedProfile
                     ? `Olá, ${selectedProfile.name}!`
                     : 'Selecione ou crie um perfil para continuar'}
-                </p>
+                </motion.p>
               </div>
 
               {/* Área de autenticação */}
@@ -497,7 +516,7 @@ export function LoginScreen() {
                 animation: shake 0.5s ease-in-out;
               }
             `}</style>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { TrendingUp } from 'lucide-react';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   showText?: boolean;
   className?: string;
 }
@@ -11,6 +11,7 @@ const sizeConfig = {
   md: { icon: 32, text: 'text-xl' },
   lg: { icon: 40, text: 'text-2xl' },
   xl: { icon: 48, text: 'text-3xl' },
+  xxl: { icon: 64, text: 'text-5xl' },
 };
 
 export function Logo({ size = 'md', showText = true, className = '' }: LogoProps) {
@@ -22,12 +23,12 @@ export function Logo({ size = 'md', showText = true, className = '' }: LogoProps
       <div className="relative">
         <div
           className="rounded-lg flex items-center justify-center"
-          style={{ width: icon + 8, height: icon + 8 }}
+          style={{ width: icon + 12, height: icon + 12 }}
         >
           <TrendingUp className="text-primary" style={{ width: icon, height: icon }} />
         </div>
         {/* Decorative dot representing financial goal */}
-        <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
       </div>
 
       {/* Text */}

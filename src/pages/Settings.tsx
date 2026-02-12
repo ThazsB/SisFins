@@ -8,7 +8,8 @@ import {
   BankAccountList,
   TransactionImporter,
 } from '@/components/openfinance';
-import { Camera, X, FolderKanban, Building2, CreditCard, Upload } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Camera, X, FolderKanban, Building2, CreditCard, Upload, LogOut, User } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function Settings() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   // Inicializar dados do perfil
   useEffect(() => {
@@ -32,10 +34,13 @@ export default function Settings() {
   }, [user, init]);
 
   const handleLogout = () => {
-    if (confirm('Tem certeza que deseja sair?')) {
-      logout();
-      navigate('/profile-selection', { replace: true });
-    }
+    setIsLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate('/profile-selection', { replace: true });
+    setIsLogoutDialogOpen(false);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -459,6 +464,33 @@ export default function Settings() {
       {isBankModalOpen && (
         <BankConnectionModal isOpen={isBankModalOpen} onClose={() => setIsBankModalOpen(false)} />
       )}
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isLogoutDialogOpen}
+        onClose={() => setIsLogoutDialogOpen(false)}
+        onCancel={() => setIsLogoutDialogOpen(false)}
+        onConfirm={confirmLogout}
+        title="Sair da Conta"
+        type="logout"
+        message={`Você está prestes a sair da conta de ${user?.name}. Deseja continuar?`}
+        confirmText="Sair"
+        cancelText="Cancelar"
+        isDestructive={false}
+        hideWarning={true}
+        details={[
+          {
+            label: 'Usuário',
+            value: user?.name || '',
+            icon: <User className="w-4 h-4 text-primary" />,
+          },
+          {
+            label: 'Ação',
+            value: 'Encerrar sessão',
+            icon: <LogOut className="w-4 h-4 text-orange-500" />,
+          },
+        ]}
+      />
     </div>
   );
 }

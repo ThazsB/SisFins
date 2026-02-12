@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import { useCategoriesStore } from '@/stores/categoriesStore';
@@ -218,23 +219,56 @@ export default function Transactions() {
     setSpendingPatterns(patterns);
   }, [data.transactions]);
 
-  // Chamar analyzeSpendingPatterns quando o componente montar
-  useEffect(() => {
-    const patterns = analyzeSpendingPatterns([]);
-    setSpendingPatterns(patterns);
-  }, []);
+  const analyzeSpendingPatterns = useCallback((transactions: Transaction[]) => {
+    if (transactions.length === 0) return [];
 
-  const analyzeSpendingPatterns = (transactions: any[]) => {
-    // Retornar padrões de teste para visualização
-    return [
-      { category: 'Alimentação', average: 150, trend: 'up' as const },
-      { category: 'Moradia', average: 800, trend: 'stable' as const },
-      { category: 'Lazer', average: 39.9, trend: 'down' as const },
-      { category: 'Salário', average: 3000, trend: 'stable' as const },
-      { category: 'Freelance', average: 500, trend: 'up' as const },
-      { category: 'Transporte', average: 200, trend: 'down' as const },
-    ];
-  };
+    const now = new Date();
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+
+    // Filtrar transações dos últimos 3 meses
+    const recentTransactions = transactions.filter((tx) => {
+      const txDate = new Date(tx.date);
+      return txDate >= threeMonthsAgo && tx.type === 'expense';
+    });
+
+    // Agrupar por categoria
+    const categoryStats: Record<string, { total: number; count: number; months: Set<string> }> = {};
+
+    recentTransactions.forEach((tx) => {
+      const month = new Date(tx.date).toISOString().slice(0, 7); // YYYY-MM
+      if (!categoryStats[tx.category]) {
+        categoryStats[tx.category] = { total: 0, count: 0, months: new Set() };
+      }
+      categoryStats[tx.category].total += tx.amount;
+      categoryStats[tx.category].count += 1;
+      categoryStats[tx.category].months.add(month);
+    });
+
+    // Calcular média e tendência para cada categoria
+    const patterns = Object.entries(categoryStats).map(([category, stats]) => {
+      const average = stats.total / stats.count;
+      const monthCount = stats.months.size;
+
+      // Determinar tendência baseada na consistência e valor
+      let trend: 'up' | 'down' | 'stable';
+      if (monthCount >= 2 && average > 500) {
+        trend = 'up';
+      } else if (monthCount === 1 || average < 100) {
+        trend = 'down';
+      } else {
+        trend = 'stable';
+      }
+
+      return {
+        category,
+        average,
+        trend,
+      };
+    });
+
+    // Ordenar por média (maior primeiro)
+    return patterns.sort((a, b) => b.average - a.average);
+  }, []);
 
   const combinedCategories = useMemo(() => {
     const merged = Array.from(new Set([...DEFAULT_CATEGORIES, ...data.categories]));
@@ -420,98 +454,7 @@ export default function Transactions() {
     return matchesType && matchesSearch;
   });
 
-  // Adicionar transações de teste temporariamente
-  const testTransactions = [
-    {
-      id: 1,
-      desc: 'Compra de Supermercado',
-      amount: 150.0,
-      type: 'expense' as const,
-      category: 'Alimentação',
-      date: new Date().toISOString().split('T')[0],
-      profileId: 'test-profile-1',
-    },
-    {
-      id: 2,
-      desc: 'Salário',
-      amount: 3000.0,
-      type: 'income' as const,
-      category: 'Salário',
-      date: new Date().toISOString().split('T')[0],
-      profileId: 'test-profile-1',
-    },
-    {
-      id: 3,
-      desc: 'Aluguel',
-      amount: 800.0,
-      type: 'expense' as const,
-      category: 'Moradia',
-      date: new Date().toISOString().split('T')[0],
-      profileId: 'test-profile-1',
-    },
-    {
-      id: 4,
-      desc: 'Netflix',
-      amount: 39.9,
-      type: 'expense' as const,
-      category: 'Lazer',
-      date: new Date().toISOString().split('T')[0],
-      profileId: 'test-profile-1',
-    },
-    {
-      id: 5,
-      desc: 'Freelance',
-      amount: 500.0,
-      type: 'income' as const,
-      category: 'Freelance',
-      date: new Date().toISOString().split('T')[0],
-      profileId: 'test-profile-1',
-    },
-  ];
-  console.log('testTransactions:', testTransactions);
-
-  // Adicionar valores fixos de teste temporariamente
-  const testFixedExpenses = [
-    {
-      id: 1,
-      name: 'Aluguel',
-      amount: 800.0,
-      type: 'expense' as const,
-      category: 'Moradia',
-      dayOfMonth: 1,
-      active: true,
-    },
-    {
-      id: 2,
-      name: 'Netflix',
-      amount: 39.9,
-      type: 'expense' as const,
-      category: 'Lazer',
-      dayOfMonth: 10,
-      active: true,
-    },
-    {
-      id: 3,
-      name: 'Conta de Água',
-      amount: 50.0,
-      type: 'expense' as const,
-      category: 'Moradia',
-      dayOfMonth: 15,
-      active: true,
-    },
-    {
-      id: 4,
-      name: 'Conta de Luz',
-      amount: 120.0,
-      type: 'expense' as const,
-      category: 'Moradia',
-      dayOfMonth: 20,
-      active: true,
-    },
-  ];
-  console.log('testFixedExpenses:', testFixedExpenses);
-
-  const sortedTransactions = [...testTransactions].sort(
+  const sortedTransactions = [...filteredTransactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
@@ -694,46 +637,82 @@ export default function Transactions() {
       {/* Main Content */}
       <div className="space-y-4">
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-stretch">
           {/* Left Column - Transactions */}
-          <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+            className="bg-card rounded-lg border border-border p-4 sm:p-6 flex flex-col min-h-[400px]"
+          >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg sm:text-xl font-bold">Transações</h2>
-              <button
+              <motion.h2
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="text-lg sm:text-xl font-bold"
+              >
+                Transações
+              </motion.h2>
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsModalOpen(true)}
                 className="bg-primary text-primary-foreground px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
                 Nova
-              </button>
+              </motion.button>
             </div>
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border pt-4 flex-1">
               <TransactionList
-                transactions={testTransactions}
+                transactions={sortedTransactions}
                 onDelete={handleDeleteRequest}
                 showActions={true}
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column - Fixed Expenses */}
-          <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-            <div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
+            className="bg-card rounded-lg border border-border p-4 sm:p-6 flex flex-col min-h-[400px]"
+          >
+            <div className="flex flex-col flex-1">
               <div className="flex items-center justify-between mb-4">
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
                   <h2 className="text-lg sm:text-xl font-bold">Valores Fixos</h2>
-                </div>
-                <button
+                </motion.div>
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleOpenCreateFixedExpense}
                   className="bg-primary text-primary-foreground px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   Novo
-                </button>
+                </motion.button>
               </div>
 
-              {testFixedExpenses.length === 0 ? (
-                <div className="empty-state border border-dashed border-border rounded-lg">
+              {data.fixedExpenses.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                  className="empty-state border border-dashed border-border rounded-lg flex-1 flex flex-col items-center justify-center min-h-[250px]"
+                >
                   <div className="empty-state__icon">
                     <span className="text-xl">📋</span>
                   </div>
@@ -741,12 +720,18 @@ export default function Transactions() {
                   <p className="empty-state__description">
                     Adicione valores repetitivos como salário ou gastos mensais
                   </p>
-                </div>
+                </motion.div>
               ) : (
-                <div className="border-t border-border pt-4">
+                <div className="border-t border-border pt-4 flex-1">
                   <div className="space-y-2">
-                    {testFixedExpenses.map((expense: any) => (
-                      <div key={expense.id} className="card-base hover:shadow-sm min-h-[80px]">
+                    {data.fixedExpenses.map((expense: any, index: number) => (
+                      <motion.div
+                        key={expense.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
+                        className="card-base hover:shadow-sm min-h-[80px]"
+                      >
                         <div className="card-content">
                           <div
                             className={`card-icon ${expense.type === 'income' ? 'bg-green-500/10' : 'bg-red-500/10'}`}
@@ -809,13 +794,13 @@ export default function Transactions() {
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Spending Patterns Panel */}

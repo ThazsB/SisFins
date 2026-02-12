@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { AVAILABLE_AVATARS, AVAILABLE_COLORS } from '@/types';
+import { getSettingsKey } from '@/config/storage';
 import {
   ArrowLeft,
   UserPlus,
@@ -17,6 +18,7 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  Smile,
 } from 'lucide-react';
 
 interface FirstAccessScreenProps {
@@ -102,30 +104,33 @@ function ImageCropModal({
     if (ctx) {
       ctx.clearRect(0, 0, size, size);
       ctx.save();
+
+      // Calcular crop quadrado no centro da imagem (sem transformações)
+      const imgAspect = img.width / img.height;
+      let srcX = 0;
+      let srcY = 0;
+      let srcWidth = img.width;
+      let srcHeight = img.height;
+
+      // Fazer crop quadrado no centro
+      if (imgAspect > 1) {
+        // Imagem mais larga - crop horizontal
+        srcWidth = img.height;
+        srcX = (img.width - srcWidth) / 2;
+      } else {
+        // Imagem mais alta - crop vertical
+        srcHeight = img.width;
+        srcY = (img.height - srcHeight) / 2;
+      }
+
+      // Aplicar clip circular
       ctx.beginPath();
       ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
       ctx.closePath();
       ctx.clip();
 
-      // Calcular dimensões para manter proporção
-      const imgAspect = img.width / img.height;
-      const canvasAspect = size / size;
-      let drawWidth = size;
-      let drawHeight = size;
-
-      if (imgAspect > canvasAspect) {
-        drawHeight = size / imgAspect;
-      } else {
-        drawWidth = size * imgAspect;
-      }
-
-      ctx.translate(size / 2, size / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-      ctx.translate(position.x, position.y);
-      ctx.scale(zoom, zoom);
-      ctx.translate(-drawWidth / 2, -drawHeight / 2);
-
-      ctx.drawImage(img, 0, 0, drawWidth, drawHeight);
+      // Desenhar o crop quadrado no canvas
+      ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, size, size);
       ctx.restore();
     }
 
@@ -153,14 +158,14 @@ function ImageCropModal({
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-neutral-900 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-neutral-800"
+        className="bg-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-border"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-neutral-800">
-          <h3 className="font-semibold text-base text-white">Ajustar Foto</h3>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-semibold text-base text-foreground">Ajustar Foto</h3>
           <button
             onClick={onCancel}
-            className="p-2 rounded-full hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-white"
+            className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
           >
             <X className="w-5 h-5" />
           </button>
@@ -168,7 +173,7 @@ function ImageCropModal({
 
         <div
           ref={containerRef as React.RefObject<HTMLDivElement>}
-          className="relative bg-neutral-950 aspect-square flex items-center justify-center overflow-hidden cursor-move"
+          className="relative bg-background aspect-square flex items-center justify-center overflow-hidden cursor-move"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -198,7 +203,7 @@ function ImageCropModal({
 
         <div className="p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <ZoomOut className="w-4 h-4 text-neutral-500" />
+            <ZoomOut className="w-4 h-4 text-muted-foreground" />
             <input
               type="range"
               min="0.5"
@@ -206,13 +211,13 @@ function ImageCropModal({
               step="0.1"
               value={zoom}
               onChange={(e) => setZoom(parseFloat(e.target.value))}
-              className="flex-1 h-2 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-primary"
+              className="flex-1 h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-primary"
             />
-            <ZoomIn className="w-4 h-4 text-neutral-500" />
+            <ZoomIn className="w-4 h-4 text-muted-foreground" />
           </div>
 
           <div className="flex items-center gap-3">
-            <RotateCw className="w-4 h-4 text-neutral-500" />
+            <RotateCw className="w-4 h-4 text-muted-foreground" />
             <input
               type="range"
               min="-180"
@@ -220,7 +225,7 @@ function ImageCropModal({
               step="5"
               value={rotation}
               onChange={(e) => setRotation(parseFloat(e.target.value))}
-              className="flex-1 h-2 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-primary"
+              className="flex-1 h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-primary"
             />
           </div>
 
@@ -228,7 +233,7 @@ function ImageCropModal({
             <button
               type="button"
               onClick={resetAdjustments}
-              className="px-4 py-2 text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Redefinir
             </button>
@@ -249,14 +254,69 @@ function ImageCropModal({
   );
 }
 
+function EmojiPickerModal({
+  onSelect,
+  onCancel,
+}: {
+  onSelect: (emoji: string) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-card rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-semibold text-base text-foreground">Escolha um emoji</h3>
+          <button
+            onClick={onCancel}
+            className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 max-h-[60vh] overflow-y-auto">
+          <div className="grid grid-cols-6 gap-2">
+            {AVAILABLE_AVATARS.map((avatar) => (
+              <button
+                key={avatar}
+                type="button"
+                onClick={() => onSelect(avatar)}
+                className="aspect-square rounded-lg flex items-center justify-center text-2xl transition-all bg-secondary hover:bg-primary hover:text-primary-foreground"
+              >
+                {avatar}
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function PasswordStrength({ password }: { password: string }) {
   const getStrength = () => {
     if (!password) return { score: 0, label: '', color: '' };
 
     let score = 0;
-    if (password.length >= 8) score++;
+    // Tamanho mínimo reduzido para 6 caracteres
+    if (password.length >= 6) score++;
+    // Letra maiúscula
     if (/[A-Z]/.test(password)) score++;
+    // Número
     if (/[0-9]/.test(password)) score++;
+    // Caractere especial
     if (/[^A-Za-z0-9]/.test(password)) score++;
 
     const levels = [
@@ -279,7 +339,7 @@ function PasswordStrength({ password }: { password: string }) {
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              i <= strength.score ? strength.color : 'bg-neutral-800'
+              i <= strength.score ? strength.color : 'bg-secondary'
             }`}
           />
         ))}
@@ -311,17 +371,16 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
     name: '',
     password: '',
     confirmPassword: '',
-    avatar: AVAILABLE_AVATARS[0],
+    avatar: '',
     color: AVAILABLE_COLORS[0].value,
     customPhoto: null as string | null,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [showCropModal, setShowCropModal] = useState(false);
-  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const validateForm = () => {
     const newErrors: FormErrors = {};
@@ -360,7 +419,7 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
 
     if (profile) {
       const additionalData = {};
-      localStorage.setItem(`ecofinance_${profile.id}_additional`, JSON.stringify(additionalData));
+      localStorage.setItem(getSettingsKey(profile.id), JSON.stringify(additionalData));
       onSuccess();
     }
   };
@@ -370,8 +429,42 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setCropImageSrc(event.target?.result as string);
-        setShowCropModal(true);
+        const img = new Image();
+        img.onload = () => {
+          // Redimensionar para o tamanho do avatar (200x200)
+          const canvas = document.createElement('canvas');
+          canvas.width = 200;
+          canvas.height = 200;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Calcular crop quadrado no centro
+            const imgAspect = img.width / img.height;
+            let srcX = 0,
+              srcY = 0,
+              srcWidth = img.width,
+              srcHeight = img.height;
+
+            if (imgAspect > 1) {
+              srcWidth = img.height;
+              srcX = (img.width - srcWidth) / 2;
+            } else {
+              srcHeight = img.width;
+              srcY = (img.height - srcHeight) / 2;
+            }
+
+            // Aplicar clip circular
+            ctx.beginPath();
+            ctx.arc(100, 100, 100, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+
+            // Desenhar imagem redimensionada
+            ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, 200, 200);
+
+            setFormData({ ...formData, customPhoto: canvas.toDataURL('image/png'), avatar: '' });
+          }
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -397,16 +490,44 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
 
   const handleCameraSnapshot = () => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+    if (!video) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Redimensionar para o tamanho do avatar (200x200)
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 200;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.drawImage(video, 0, 0);
-      setCropImageSrc(canvas.toDataURL('image/png'));
-      setShowCropModal(true);
+      // Inverter horizontalmente para selfie
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+
+      // Calcular crop quadrado no centro
+      const videoAspect = video.videoWidth / video.videoHeight;
+      let srcX = 0,
+        srcY = 0,
+        srcWidth = video.videoWidth,
+        srcHeight = video.videoHeight;
+
+      if (videoAspect > 1) {
+        srcWidth = video.videoHeight;
+        srcX = (video.videoWidth - srcWidth) / 2;
+      } else {
+        srcHeight = video.videoWidth;
+        srcY = (video.videoHeight - srcHeight) / 2;
+      }
+
+      // Aplicar clip circular
+      ctx.beginPath();
+      ctx.arc(100, 100, 100, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+
+      // Desenhar vídeo redimensionado
+      ctx.drawImage(video, srcX, srcY, srcWidth, srcHeight, 0, 0, 200, 200);
+
+      setFormData({ ...formData, customPhoto: canvas.toDataURL('image/png'), avatar: '' });
+      handleCameraClose();
     }
   };
 
@@ -418,15 +539,8 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
     setShowCamera(false);
   };
 
-  const handleCropConfirm = (cropped: CroppedImage) => {
-    setFormData({ ...formData, customPhoto: cropped.dataUrl, avatar: '' });
-    setShowCropModal(false);
-    setCropImageSrc(null);
-    handleCameraClose();
-  };
-
   const handleRemovePhoto = () => {
-    setFormData({ ...formData, customPhoto: null });
+    setFormData({ ...formData, customPhoto: null, avatar: '' });
   };
 
   const startCamera = () => {
@@ -439,16 +553,14 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
   };
 
   return (
-    <div className="h-screen bg-neutral-950 flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-screen bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Lado esquerdo - oculto em mobile, visível em lg */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-neutral-900 via-neutral-800 to-orange-900/20 flex-col items-center justify-center p-6 xl:p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-background flex-col items-center justify-center p-6 xl:p-12 relative overflow-hidden">
         {/* Gradiente mais claro com blur */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-slate/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-slate/10 rounded-full blur-3xl" />
         </div>
-        {/* Overlay suave */}
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/60 via-transparent to-neutral-950/30" />
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -457,12 +569,12 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
           className="relative z-10 space-y-4 xl:space-y-6 text-center"
         >
           <div className="space-y-2">
-            <h2 className="text-2xl xl:text-4xl font-bold text-white leading-tight">
+            <h2 className="text-2xl xl:text-4xl font-bold text-foreground leading-tight">
               Comece sua jornada
               <br />
               <span className="text-primary">financeira inteligente</span>
             </h2>
-            <p className="text-neutral-300 text-sm xl:text-lg max-w-md mx-auto">
+            <p className="text-muted-foreground text-sm xl:text-lg max-w-md mx-auto">
               Controle suas finanças, alcance seus objetivos e construa um futuro financeiro sólido.
             </p>
           </div>
@@ -473,10 +585,10 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="flex items-center gap-2 px-3 py-1.5 xl:px-4 xl:py-2 bg-neutral-800/50 backdrop-blur-sm rounded-full border border-neutral-700/50"
+                className="flex items-center gap-2 px-3 py-1.5 xl:px-4 xl:py-2 bg-secondary/50 backdrop-blur-sm rounded-full border border-border/50"
               >
                 <Check className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-primary" />
-                <span className="text-xs xl:text-sm text-white">{feature}</span>
+                <span className="text-xs xl:text-sm text-foreground">{feature}</span>
               </motion.div>
             ))}
           </div>
@@ -486,47 +598,41 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
-          className="relative z-10 text-xs xl:text-sm text-neutral-400 mt-6"
+          className="relative z-10 text-xs xl:text-sm text-muted-foreground mt-6"
         >
           Sua educação financeira em primeiro lugar.
         </motion.div>
       </div>
 
       {/* Lado direito - formulário */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center h-full bg-gradient-to-bl from-neutral-900 via-neutral-800 to-orange-900/20 flex-col items-center justify-center p-6 xl:p-12 relative overflow-hidden">
-        {/* Gradiente mais claro com blur - espelhado */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/3 left-1/3 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl" />
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center h-full bg-background p-6 xl:p-12 relative overflow-hidden">
+        {/* Gradiente mais claro com blur - visível apenas em desktop */}
+        <div className="hidden lg:block absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-slate/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/3 left-1/3 w-80 h-80 bg-slate/10 rounded-full blur-3xl" />
         </div>
-        {/* Overlay suave */}
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/60 via-transparent to-neutral-950/30" />
-        <div className="absolute inset-0 bg-gradient-to-l from-neutral-800/20 via-transparent to-neutral-900/10" />
+        {/* Overlay suave - visível apenas em desktop */}
+        <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/30" />
+        <div className="hidden lg:block absolute inset-0 bg-gradient-to-l from-secondary/20 via-transparent to-background/10" />
 
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-4 sm:p-5 lg:p-6 w-full max-w-lg overflow-hidden">
           <div className="w-full flex flex-col items-center">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 text-base text-neutral-400 hover:text-white mb-4 transition-colors group self-start"
-            >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-              Voltar
-            </button>
-
-            <div className="mb-4">
-              <h1 className="text-2xl font-bold text-white mb-1">Crie sua conta</h1>
-              <p className="text-neutral-400 text-base">Preencha os dados abaixo para começar</p>
+            <div className="mb-4 text-center">
+              <h1 className="text-2xl font-bold text-foreground mb-1">Crie sua conta</h1>
+              <p className="text-muted-foreground text-base">
+                Preencha os dados abaixo para começar
+              </p>
             </div>
 
-            <div className="bg-neutral-900/50 backdrop-blur-sm rounded-2xl border border-neutral-800/50 p-5 space-y-4 overflow-hidden w-full">
-              <div className="flex items-center justify-center gap-4">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/30 overflow-hidden flex items-center justify-center">
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 p-5 space-y-4 overflow-hidden w-full">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="relative flex flex-col items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/30 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {formData.customPhoto ? (
                       <img
                         src={formData.customPhoto}
                         alt="Foto de perfil"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : formData.avatar ? (
                       <span className="text-3xl">{formData.avatar}</span>
@@ -535,7 +641,7 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                     )}
                   </div>
 
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1 transform">
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -554,7 +660,16 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                     >
                       <Camera className="w-4 h-4" />
                     </motion.button>
-                    {formData.customPhoto && (
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setShowEmojiPicker(true)}
+                      className="p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-lg"
+                      title="Emoji"
+                    >
+                      <Smile className="w-4 h-4" />
+                    </motion.button>
+                    {(formData.customPhoto || formData.avatar) && (
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -576,24 +691,8 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                   />
                 </div>
 
-                <div className="flex-1">
-                  <h3 className="text-white font-medium text-base mb-1">Foto de perfil</h3>
-                  <p className="text-sm text-neutral-400">Upload, câmera ou avatar</p>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {AVAILABLE_COLORS.slice(0, 6).map((color) => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, color: color.value })}
-                        className={`w-6 h-6 rounded-full transition-all ${
-                          formData.color === color.value
-                            ? 'ring-2 ring-offset-2 ring-offset-neutral-900 ring-primary scale-110'
-                            : 'hover:scale-105'
-                        }`}
-                        style={{ backgroundColor: color.value }}
-                      />
-                    ))}
-                  </div>
+                <div className="flex-1 text-center">
+                  <h3 className="text-foreground font-medium text-base mb-1">Foto de perfil</h3>
                 </div>
               </div>
 
@@ -605,7 +704,7 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <label className="block text-sm font-medium text-neutral-400 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       Ou escolha um avatar
                     </label>
                     <div className="grid grid-cols-8 gap-2">
@@ -616,8 +715,8 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                           onClick={() => setFormData({ ...formData, avatar })}
                           className={`aspect-square rounded-lg flex items-center justify-center text-xl transition-all ${
                             formData.avatar === avatar
-                              ? 'bg-primary text-white'
-                              : 'bg-neutral-800 hover:bg-neutral-700'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary hover:bg-secondary/80'
                           }`}
                         >
                           {avatar}
@@ -630,16 +729,16 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                     Nome completo
                   </label>
                   <div className="relative">
-                    <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
+                    <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full pl-10 pr-4 py-2.5 bg-neutral-800/50 rounded-lg outline-none transition-all text-base text-white placeholder:text-neutral-500 ${errors.name ? 'border border-red-500' : 'focus:border-primary/50'}`}
+                      className={`w-full pl-10 pr-4 py-2.5 bg-secondary/50 rounded-lg outline-none transition-all text-base text-foreground placeholder:text-muted-foreground ${errors.name ? 'border border-red-500' : 'focus:border-primary/50'}`}
                       placeholder="Seu nome completo"
                     />
                   </div>
@@ -652,20 +751,22 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">Senha</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                    Senha
+                  </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className={`w-full pl-10 pr-10 py-2.5 bg-neutral-800/50 rounded-lg outline-none transition-all text-base text-white placeholder:text-neutral-500 ${errors.password ? 'border border-red-500' : 'focus:border-primary/50'}`}
+                      className={`w-full pl-10 pr-10 py-2.5 bg-secondary/50 rounded-lg outline-none transition-all text-base text-foreground placeholder:text-muted-foreground ${errors.password ? 'border border-red-500' : 'focus:border-primary/50'}`}
                       placeholder="Mínimo 6 caracteres"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -680,7 +781,7 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                     Confirmar senha
                   </label>
                   <div className="relative">
@@ -707,9 +808,10 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
                   <button
                     type="button"
                     onClick={onBack}
-                    className="flex-1 px-4 py-3 bg-neutral-800 text-neutral-300 rounded-lg hover:bg-neutral-700 transition-colors text-sm font-medium"
+                    className="flex-1 px-4 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium"
                   >
-                    Cancelar
+                    <ArrowLeft className="w-4 h-4 inline mr-2" />
+                    Voltar
                   </button>
                   <button
                     type="submit"
@@ -729,24 +831,11 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
               </form>
             </div>
 
-            <p className="text-center text-sm text-neutral-500 mt-4">
+            <p className="text-center text-sm text-muted-foreground mt-4">
               Ao criar sua conta, você concorda com nossos termos de uso
             </p>
           </div>
         </div>
-
-        <AnimatePresence>
-          {showCropModal && cropImageSrc && (
-            <ImageCropModal
-              imageSrc={cropImageSrc}
-              onConfirm={handleCropConfirm}
-              onCancel={() => {
-                setShowCropModal(false);
-                setCropImageSrc(null);
-              }}
-            />
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {showCamera && (
@@ -774,6 +863,15 @@ export function FirstAccessScreen({ onBack, onSuccess }: FirstAccessScreenProps)
               </div>
               <canvas ref={canvasRef} className="hidden" />
             </motion.div>
+          )}
+          {showEmojiPicker && (
+            <EmojiPickerModal
+              onSelect={(emoji) => {
+                setFormData({ ...formData, avatar: emoji, customPhoto: null });
+                setShowEmojiPicker(false);
+              }}
+              onCancel={() => setShowEmojiPicker(false)}
+            />
           )}
         </AnimatePresence>
       </div>

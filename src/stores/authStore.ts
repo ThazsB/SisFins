@@ -1,5 +1,15 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { Profile } from '@/types';
+import {
+  PROFILE_STORAGE_KEY,
+  PROFILES_LIST_KEY,
+  getTransactionsKey,
+  getBudgetsKey,
+  getGoalsKey,
+  getCategoriesKey,
+  getNotificationsKey,
+  getProfileDataKey,
+} from '@/config/storage';
 
 interface AuthState {
   user: Profile | null;
@@ -20,10 +30,10 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => {
   // Carregar perfis do localStorage
-  const profiles = JSON.parse(localStorage.getItem('ecofinance_profiles') || '[]');
+  const profiles = JSON.parse(localStorage.getItem(PROFILES_LIST_KEY) || '[]');
 
   // Carregar usuário ativo do localStorage
-  const activeProfileId = localStorage.getItem('ecofinance_active_profile');
+  const activeProfileId = localStorage.getItem(PROFILE_STORAGE_KEY);
   const activeProfile = activeProfileId
     ? profiles.find((p: Profile) => p.id === activeProfileId)
     : null;
@@ -36,7 +46,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     login: async (profileId, password) => {
       set({ loading: true });
       try {
-        const profiles = JSON.parse(localStorage.getItem('ecofinance_profiles') || '[]');
+        const profiles = JSON.parse(localStorage.getItem(PROFILES_LIST_KEY) || '[]');
         const profile = profiles.find((p: Profile) => p.id === profileId);
 
         if (!profile) {
@@ -48,10 +58,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
           // Update last access time
           profile.lastAccess = new Date().toISOString();
           const updatedProfiles = profiles.map((p: Profile) => (p.id === profileId ? profile : p));
-          localStorage.setItem('ecofinance_profiles', JSON.stringify(updatedProfiles));
+          localStorage.setItem(PROFILES_LIST_KEY, JSON.stringify(updatedProfiles));
 
           // Store active profile
-          localStorage.setItem('ecofinance_active_profile', profileId);
+          localStorage.setItem(PROFILE_STORAGE_KEY, profileId);
 
           // Clear welcome toast flag to show it on login
           sessionStorage.removeItem('welcome_shown');
@@ -67,7 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     logout: () => {
-      localStorage.removeItem('ecofinance_active_profile');
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
       sessionStorage.removeItem('welcome_shown');
       set({ user: null });
     },
@@ -75,7 +85,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     createProfile: async (name, password, avatar = '👤', color = '#F4A261') => {
       set({ loading: true });
       try {
-        const profiles = JSON.parse(localStorage.getItem('ecofinance_profiles') || '[]');
+        const profiles = JSON.parse(localStorage.getItem(PROFILES_LIST_KEY) || '[]');
 
         // Validate name
         if (!name.trim()) {
@@ -100,36 +110,30 @@ export const useAuthStore = create<AuthState>((set, get) => {
         };
 
         profiles.push(newProfile);
-        localStorage.setItem('ecofinance_profiles', JSON.stringify(profiles));
+        localStorage.setItem(PROFILES_LIST_KEY, JSON.stringify(profiles));
 
         // Initialize profile data
         const initialData = {
           transactions: [],
-          budgets: [],
+          budget: [],
           goals: [],
           categories: [],
         };
 
         localStorage.setItem(
-          `ecofinance_${newProfile.id}_transactions`,
+          getTransactionsKey(newProfile.id),
           JSON.stringify(initialData.transactions)
         );
+        localStorage.setItem(getBudgetsKey(newProfile.id), JSON.stringify(initialData.budget));
+        localStorage.setItem(getGoalsKey(newProfile.id), JSON.stringify(initialData.goals));
         localStorage.setItem(
-          `ecofinance_${newProfile.id}_budgets`,
-          JSON.stringify(initialData.budgets)
-        );
-        localStorage.setItem(
-          `ecofinance_${newProfile.id}_goals`,
-          JSON.stringify(initialData.goals)
-        );
-        localStorage.setItem(
-          `ecofinance_${newProfile.id}_categories`,
+          getCategoriesKey(newProfile.id),
           JSON.stringify(initialData.categories)
         );
-        localStorage.setItem(`ecofinance_${newProfile.id}_notifications`, JSON.stringify([]));
+        localStorage.setItem(getNotificationsKey(newProfile.id), JSON.stringify([]));
 
         set({ user: newProfile, profiles });
-        localStorage.setItem('ecofinance_active_profile', newProfile.id);
+        localStorage.setItem(PROFILE_STORAGE_KEY, newProfile.id);
 
         return newProfile;
       } catch {
@@ -142,7 +146,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     updateProfile: async (profileId, data) => {
       set({ loading: true });
       try {
-        const profiles = JSON.parse(localStorage.getItem('ecofinance_profiles') || '[]');
+        const profiles = JSON.parse(localStorage.getItem(PROFILES_LIST_KEY) || '[]');
         const index = profiles.findIndex((p: Profile) => p.id === profileId);
 
         if (index === -1) {
@@ -151,7 +155,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
         const updatedProfile = { ...profiles[index], ...data };
         profiles[index] = updatedProfile;
-        localStorage.setItem('ecofinance_profiles', JSON.stringify(profiles));
+        localStorage.setItem(PROFILES_LIST_KEY, JSON.stringify(profiles));
 
         if (get().user?.id === profileId) {
           set({ user: updatedProfile, profiles });
@@ -170,18 +174,18 @@ export const useAuthStore = create<AuthState>((set, get) => {
     deleteProfile: async (profileId) => {
       set({ loading: true });
       try {
-        const profiles = JSON.parse(localStorage.getItem('ecofinance_profiles') || '[]');
+        const profiles = JSON.parse(localStorage.getItem(PROFILES_LIST_KEY) || '[]');
         const updatedProfiles = profiles.filter((p: Profile) => p.id !== profileId);
-        localStorage.setItem('ecofinance_profiles', JSON.stringify(updatedProfiles));
+        localStorage.setItem(PROFILES_LIST_KEY, JSON.stringify(updatedProfiles));
 
         // Remove profile data
         ['transactions', 'budgets', 'goals', 'categories', 'notifications'].forEach((key) => {
-          localStorage.removeItem(`ecofinance_${profileId}_${key}`);
+          localStorage.removeItem(getProfileDataKey(profileId, `_${key}`));
         });
 
         if (get().user?.id === profileId) {
           set({ user: null, profiles: updatedProfiles });
-          localStorage.removeItem('ecofinance_active_profile');
+          localStorage.removeItem(PROFILE_STORAGE_KEY);
         } else {
           set({ profiles: updatedProfiles });
         }
@@ -196,7 +200,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     validatePassword: async (profileId, password) => {
       try {
-        const profiles = JSON.parse(localStorage.getItem('ecofinance_profiles') || '[]');
+        const profiles = JSON.parse(localStorage.getItem(PROFILES_LIST_KEY) || '[]');
         const profile = profiles.find((p: Profile) => p.id === profileId);
 
         if (!profile) {

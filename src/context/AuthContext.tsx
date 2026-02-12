@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { Profile } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
+import { PROFILE_STORAGE_KEY } from '@/config/storage';
 
 interface AuthContextType {
   user: Profile | null;
@@ -26,7 +27,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Carregar usuário ativo do localStorage ao inicializar
   useEffect(() => {
     console.log('[AuthContext] useEffect triggered, profiles.length:', profiles.length);
-    const activeProfileId = localStorage.getItem('ecofinance_active_profile');
+    const activeProfileId = localStorage.getItem(PROFILE_STORAGE_KEY);
     console.log('[AuthContext] activeProfileId:', activeProfileId);
     if (activeProfileId && profiles.length > 0) {
       const activeProfile = profiles.find((p: Profile) => p.id === activeProfileId);
@@ -36,52 +37,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         useAuthStore.setState({ user: activeProfile });
       } else {
         console.log('[AuthContext] Active profile not found in profiles');
+        localStorage.removeItem(PROFILE_STORAGE_KEY);
       }
     } else {
       console.log('[AuthContext] Skipping (no activeProfileId or no profiles)');
-      // Simular usuário logado para testes
-      const mockProfile = {
-        id: 'test-profile-1',
-        name: 'Teste',
-        avatar: '👤',
-        color: '#FF6B00',
-        createdAt: new Date().toISOString(),
-        lastActivity: new Date().toISOString(),
-        passwordHash: 'test-hash',
-        lastAccess: new Date().toISOString(),
-      };
-      useAuthStore.setState({ user: mockProfile });
+      useAuthStore.setState({ user: null });
     }
   }, [profiles]); // Depende de profiles para garantir que sejam carregados
 
-  // Handle page close detection without affecting refresh
+  // Handle page close - sempre limpar sessão ao fechar a página
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Mark the time when page is being unloaded
-      localStorage.setItem('ecofinance_last_unload_time', Date.now().toString());
+      // Sempre limpar a sessão quando a página é fechada
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+      sessionStorage.removeItem('welcome_shown');
+      console.log('[AuthContext] Page closing, clearing session');
     };
-
-    const checkPageClose = () => {
-      const lastUnloadTime = localStorage.getItem('ecofinance_last_unload_time');
-      if (lastUnloadTime) {
-        const timeDiff = Date.now() - parseInt(lastUnloadTime);
-        localStorage.removeItem('ecofinance_last_unload_time');
-
-        // If more than 5 seconds passed since unload, it was likely a real close
-        // If less than 5 seconds, it was likely a refresh
-        if (timeDiff > 5000) {
-          console.log('[AuthContext] Page was closed, clearing session');
-          localStorage.removeItem('ecofinance_active_profile');
-          sessionStorage.removeItem('welcome_shown');
-          useAuthStore.setState({ user: null });
-        } else {
-          console.log('[AuthContext] Page was refreshed, keeping session');
-        }
-      }
-    };
-
-    // Check on page load if there was a previous unload
-    checkPageClose();
 
     // Add listener for page unload
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -91,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [profiles]); // Depende de profiles para garantir que sejam carregados
+  }, []);
 
   return (
     <AuthContext.Provider

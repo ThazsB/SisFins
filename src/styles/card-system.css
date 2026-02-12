@@ -1,7 +1,7 @@
 /**
  * Design System - Card Components
  * Sistema padronizado para cards de transações e itens de lista
- * 
+ *
  * Princípios:
  * - Consistência visual em toda a aplicação
  * - Hierarquia de informações clara
@@ -240,7 +240,7 @@
      ============================================ */
   .card-skeleton {
     @apply flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-border/50;
-    @apply bg-card/50;
+    background-color: rgba(197, 197, 197, 0.5);
   }
 
   .card-skeleton__icon {
