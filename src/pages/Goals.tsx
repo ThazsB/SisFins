@@ -162,10 +162,20 @@ export default function Goals() {
             }
 
             // Mostrar toast de contribuição
-            showGoalContribution({ name: goal.name, current: value, target: newProgress });
+            showGoalContribution({
+              name: goal.name,
+              current: value,
+              target: goal.target,
+              progress: newProgress,
+            });
           } else {
             // Apenas contribuição normal
-            showGoalContribution({ name: goal.name, current: value, target: newProgress });
+            showGoalContribution({
+              name: goal.name,
+              current: value,
+              target: goal.target,
+              progress: newProgress,
+            });
           }
         }
 

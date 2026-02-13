@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import { useCategoriesStore } from '@/stores/categoriesStore';
@@ -89,6 +88,24 @@ export default function Transactions() {
     isDeleting: false,
   });
 
+  // Fixed expense delete dialog state
+  const [fixedExpenseDeleteDialog, setFixedExpenseDeleteDialog] = useState<{
+    isOpen: boolean;
+    expense: {
+      id: number;
+      name: string;
+      amount: number;
+      type: string;
+      dayOfMonth: number;
+      category: string;
+    } | null;
+    isDeleting: boolean;
+  }>({
+    isOpen: false,
+    expense: null,
+    isDeleting: false,
+  });
+
   // Fixed Expenses management
   const handleOpenCreateFixedExpense = () => {
     setEditingFixedExpense(null);
@@ -157,17 +174,50 @@ export default function Transactions() {
     }
   };
 
-  const handleDeleteFixedExpense = async (id: number) => {
-    if (!window.confirm('Tem certeza que deseja excluir este valor fixo?')) {
-      return;
-    }
+  const handleDeleteFixedExpense = async (expense: {
+    id: number;
+    name: string;
+    amount: number;
+    type: string;
+    dayOfMonth: number;
+    category: string;
+  }) => {
+    setFixedExpenseDeleteDialog({
+      isOpen: true,
+      expense,
+      isDeleting: false,
+    });
+  };
+
+  const handleConfirmFixedExpenseDelete = async () => {
+    if (!fixedExpenseDeleteDialog.expense) return;
+
+    setFixedExpenseDeleteDialog((prev) => ({ ...prev, isDeleting: true }));
 
     try {
-      await deleteFixedExpense(id);
+      await deleteFixedExpense(fixedExpenseDeleteDialog.expense.id);
+      setFixedExpenseDeleteDialog({
+        isOpen: false,
+        expense: null,
+        isDeleting: false,
+      });
     } catch (error) {
       console.error('Erro ao excluir valor fixo:', error);
       alert('Ocorreu um erro ao excluir');
+      setFixedExpenseDeleteDialog({
+        isOpen: false,
+        expense: null,
+        isDeleting: false,
+      });
     }
+  };
+
+  const handleCancelFixedExpenseDelete = () => {
+    setFixedExpenseDeleteDialog({
+      isOpen: false,
+      expense: null,
+      isDeleting: false,
+    });
   };
 
   const toggleActiveFixedExpense = async (id: number) => {
@@ -639,80 +689,46 @@ export default function Transactions() {
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-stretch">
           {/* Left Column - Transactions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
-            className="bg-card rounded-lg border border-border p-4 sm:p-6 flex flex-col min-h-[400px]"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <motion.h2
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="text-lg sm:text-xl font-bold"
-              >
-                Transações
-              </motion.h2>
-              <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsModalOpen(true)}
-                className="bg-primary text-primary-foreground px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                Nova
-              </motion.button>
+          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border flex flex-col min-h-[400px]">
+            <div className="flex flex-col flex-1">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold">Transações</h3>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-primary text-primary-foreground px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nova
+                </button>
+              </div>
+              <div className="flex-1">
+                <TransactionList
+                  transactions={sortedTransactions}
+                  onDelete={handleDeleteRequest}
+                  showActions={true}
+                />
+              </div>
             </div>
-            <div className="border-t border-border pt-4 flex-1">
-              <TransactionList
-                transactions={sortedTransactions}
-                onDelete={handleDeleteRequest}
-                showActions={true}
-              />
-            </div>
-          </motion.div>
+          </div>
 
           {/* Right Column - Fixed Expenses */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
-            className="bg-card rounded-lg border border-border p-4 sm:p-6 flex flex-col min-h-[400px]"
-          >
+          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border flex flex-col min-h-[400px]">
             <div className="flex flex-col flex-1">
-              <div className="flex items-center justify-between mb-4">
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                >
-                  <h2 className="text-lg sm:text-xl font-bold">Valores Fixos</h2>
-                </motion.div>
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold">Valores Fixos</h3>
+                </div>
+                <button
                   onClick={handleOpenCreateFixedExpense}
                   className="bg-primary text-primary-foreground px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   Novo
-                </motion.button>
+                </button>
               </div>
 
               {data.fixedExpenses.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                  className="empty-state border border-dashed border-border rounded-lg flex-1 flex flex-col items-center justify-center min-h-[250px]"
-                >
+                <div className="empty-state border border-dashed border-border rounded-lg flex-1 flex flex-col items-center justify-center min-h-[250px]">
                   <div className="empty-state__icon">
                     <span className="text-xl">📋</span>
                   </div>
@@ -720,18 +736,12 @@ export default function Transactions() {
                   <p className="empty-state__description">
                     Adicione valores repetitivos como salário ou gastos mensais
                   </p>
-                </motion.div>
+                </div>
               ) : (
                 <div className="border-t border-border pt-4 flex-1">
                   <div className="space-y-2">
-                    {data.fixedExpenses.map((expense: any, index: number) => (
-                      <motion.div
-                        key={expense.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
-                        className="card-base hover:shadow-sm min-h-[80px]"
-                      >
+                    {data.fixedExpenses.map((expense: any) => (
+                      <div key={expense.id} className="card-base hover:shadow-sm min-h-[80px]">
                         <div className="card-content">
                           <div
                             className={`card-icon ${expense.type === 'income' ? 'bg-green-500/10' : 'bg-red-500/10'}`}
@@ -786,7 +796,7 @@ export default function Transactions() {
                           </button>
 
                           <button
-                            onClick={() => handleDeleteFixedExpense(expense.id)}
+                            onClick={() => handleDeleteFixedExpense(expense)}
                             className="card-action-btn card-action-btn--danger"
                             title="Excluir"
                             aria-label="Excluir"
@@ -794,13 +804,13 @@ export default function Transactions() {
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Spending Patterns Panel */}
@@ -1202,6 +1212,42 @@ export default function Transactions() {
         confirmText="Excluir"
         cancelText="Cancelar"
         isDestructive={true}
+      />
+
+      {/* Fixed Expense Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={fixedExpenseDeleteDialog.isOpen}
+        onClose={handleCancelFixedExpenseDelete}
+        onConfirm={handleConfirmFixedExpenseDelete}
+        onCancel={handleCancelFixedExpenseDelete}
+        title="Excluir Valor Fixo"
+        message={`Tem certeza que deseja excluir '${fixedExpenseDeleteDialog.expense?.name}'? Esta ação não pode ser desfeita.`}
+        details={
+          fixedExpenseDeleteDialog.expense
+            ? [
+                {
+                  label: 'Nome',
+                  value: fixedExpenseDeleteDialog.expense.name,
+                },
+                {
+                  label: 'Valor',
+                  value: `${fixedExpenseDeleteDialog.expense.type === 'income' ? '+' : '-'}${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fixedExpenseDeleteDialog.expense.amount)}`,
+                },
+                {
+                  label: 'Dia do mês',
+                  value: `${fixedExpenseDeleteDialog.expense.dayOfMonth}`,
+                },
+                {
+                  label: 'Categoria',
+                  value: fixedExpenseDeleteDialog.expense.category,
+                },
+              ]
+            : []
+        }
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        isDestructive={true}
+        isDeleting={fixedExpenseDeleteDialog.isDeleting}
       />
     </div>
   );

@@ -14,7 +14,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { SplashScreen } from '@/components/ui/SplashScreen';
-import { NotificationCenter, ToastContainer } from '@/components/notifications';
+import { ToastContainer } from '@/components/notifications';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -115,7 +115,6 @@ function AppContent() {
         )}
       </AnimatePresence>
 
-      <NotificationCenter />
       <ToastContainer />
     </>
   );

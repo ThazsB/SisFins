@@ -636,10 +636,15 @@ export const useGoalToast = () => {
   }, []);
 
   const showGoalContribution = useCallback(
-    (data: { name: string; current: number; target: number }) => {
-      const { name, current, target } = data;
+    (data: { name: string; current: number; target: number; progress?: number }) => {
+      const { name, current, target, progress } = data;
       const formattedCurrent = formatCurrencyForToast(current);
-      const percentage = Math.round((current / target) * 100);
+      // Se temos progress, calculamos a porcentagem do progresso total
+      // Caso contrário, calculamos a contribuição em relação ao target
+      const percentage =
+        progress !== undefined
+          ? Math.round((progress / target) * 100)
+          : Math.round((current / target) * 100);
       const messageConfig = TOAST_MESSAGES.GOAL.CONTRIBUTION;
 
       window.dispatchEvent(

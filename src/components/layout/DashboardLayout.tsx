@@ -8,7 +8,6 @@ import {
   Flag,
   BarChart3,
   Settings,
-  Bell,
   Plus,
   Menu,
   X,
@@ -30,7 +29,7 @@ export function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { unreadCount, openCenter, addNotification, updatePreferences } = useNotificationsStore();
+  const { updatePreferences } = useNotificationsStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -54,18 +53,6 @@ export function DashboardLayout() {
       updatePreferences({ profileId: user.id, userId: user.id });
     }
   }, [user?.id, updatePreferences]);
-
-  // Função para adicionar notificação de teste
-  const addTestNotification = () => {
-    addNotification({
-      title: 'Notificação de Teste',
-      message: 'Esta é uma notificação de teste para verificar se o sistema está funcionando.',
-      category: 'system',
-      priority: 'normal',
-      channels: ['in_app'],
-      data: { test: true },
-    });
-  };
 
   // Fechar sidebar ao clicar em um item no mobile
   const handleNavClick = (href: string) => {
@@ -203,29 +190,6 @@ export function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Notification Bell */}
-            <button
-              onClick={openCenter}
-              className="relative p-2 hover:bg-accent rounded-lg transition-colors"
-              title="Notificações"
-            >
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] text-xs font-bold text-primary-foreground bg-primary rounded-full px-1 animate-pulse">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* Botão de teste */}
-            <button
-              onClick={addTestNotification}
-              className="p-2 hover:bg-accent rounded-lg transition-colors hidden sm:flex"
-              title="Testar notificação"
-            >
-              <Plus className="h-5 w-5 text-muted-foreground" />
-            </button>
-
             {/* New Transaction Button */}
             {location.pathname !== '/transactions' && (
               <button

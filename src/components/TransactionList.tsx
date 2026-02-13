@@ -89,9 +89,9 @@ export const TransactionList = memo(function TransactionList({
 
   if (transactions.length === 0) {
     return (
-      <div className="empty-state">
+      <div className="empty-state border border-dashed border-border rounded-lg flex-1 flex flex-col items-center justify-center min-h-[250px]">
         <div className="empty-state__icon">
-          <span className="text-2xl sm:text-3xl">💸</span>
+          <span className="text-xl">💸</span>
         </div>
         <p className="empty-state__title">Nenhuma transação encontrada</p>
         <p className="empty-state__description">Comece adicionando sua primeira transação</p>
@@ -100,20 +100,21 @@ export const TransactionList = memo(function TransactionList({
   }
 
   return (
-    <div className="space-y-2 sm:space-y-3 card-list">
-      {transactions.map((tx, index) => (
-        <TransactionItem
-          key={tx.id}
-          transaction={tx}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          showActions={showActions}
-          isSelected={selectedIds.includes(tx.id)}
-          onSelect={onSelect}
-          disabled={disabled}
-          style={{ animationDelay: `${index * 50}ms` }}
-        />
-      ))}
+    <div className="border-t border-border pt-4 flex-1">
+      <div className="space-y-2">
+        {transactions.map((tx) => (
+          <TransactionItem
+            key={tx.id}
+            transaction={tx}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            showActions={showActions}
+            isSelected={selectedIds.includes(tx.id)}
+            onSelect={onSelect}
+            disabled={disabled}
+          />
+        ))}
+      </div>
     </div>
   );
 });
@@ -127,7 +128,6 @@ interface TransactionItemProps {
   isSelected?: boolean;
   onSelect?: (id: number) => void;
   disabled?: boolean;
-  style?: React.CSSProperties;
 }
 
 const TransactionItem = memo(function TransactionItem({
@@ -138,7 +138,6 @@ const TransactionItem = memo(function TransactionItem({
   isSelected = false,
   onSelect,
   disabled = false,
-  style,
 }: TransactionItemProps) {
   const isIncome = transaction.type === 'income';
   const { categories: storeCategories } = useCategoriesStore();
@@ -158,8 +157,8 @@ const TransactionItem = memo(function TransactionItem({
   };
 
   const cardClasses = [
+    'card-base',
     'card-transaction',
-    'card-animate-enter',
     isIncome ? 'card-transaction--income' : 'card-transaction--expense',
     isSelected ? 'card-transaction--selected' : '',
     disabled ? 'card-transaction--disabled' : '',
@@ -172,7 +171,6 @@ const TransactionItem = memo(function TransactionItem({
     <div
       className={cardClasses}
       onClick={handleClick}
-      style={style}
       role={onSelect ? 'button' : undefined}
       tabIndex={onSelect ? 0 : undefined}
       aria-pressed={isSelected}

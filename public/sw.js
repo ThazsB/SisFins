@@ -1,120 +1,138 @@
-/**
- * Service Worker para Fins
- * 
- * Gerencia push notifications, cache offline e sincronização
- */
+// Service Worker para Fins PWA
+const CACHE_NAME = 'fins-v1.0.1';
+const STATIC_CACHE = 'fins-static-v1';
+const DYNAMIC_CACHE = 'fins-dynamic-v1';
 
-const CACHE_NAME = 'fins-v1';
-const NOTIFICATIONS_CACHE = 'fins-notifications-v1';
-
-// URLs para cache de notificações
-const NOTIFICATION_ASSETS = [
-  '/icons/notification-icon.png',
-  '/icons/badge-icon.png',
+// Arquivos para cache estático
+const STATIC_FILES = [
+  '/',
+  '/index.html',
   '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ];
 
-// Install event
+// Instalar Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
-  event.waitUntil(self.skipWaiting());
+  console.log('[SW] Instalando Service Worker...');
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => {
+      console.log('[SW] Cache aberto, adicionando arquivos estáticos...');
+      return cache.addAll(STATIC_FILES);
+    })
+  );
+  self.skipWaiting();
 });
 
-// Activate event
+// Ativar Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
-  event.waitUntil(clients.claim());
+  console.log('[SW] Ativando Service Worker...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => {
+            return cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE;
+          })
+          .map((cacheName) => {
+            console.log('[SW] Removendo cache antigo:', cacheName);
+            return caches.delete(cacheName);
+          })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
-// Fetch event - apenas para assets de notificação
+// Interceptar requisições
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  
-  // Apenas cachear URLs relevantes
-  const url = new URL(event.request.url);
-  if (NOTIFICATION_ASSETS.some(asset => url.pathname.includes(asset))) {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Ignorar requisições não-GET
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Ignorar requisições para Supabase e APIs externas
+  if (url.origin !== location.origin) {
+    return;
+  }
+
+  // Estratégia: Network First para HTML, Cache First para assets
+  if (request.headers.get('accept')?.includes('text/html')) {
+    // Network First para HTML
     event.respondWith(
-      caches.open(NOTIFICATIONS_CACHE).then((cache) => {
-        return cache.match(event.request).then((response) => {
-          if (response) return response;
-          return fetch(event.request).then((networkResponse) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone);
           });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then((response) => {
+            return response || caches.match('/');
+          });
+        })
+    );
+  } else {
+    // Cache First para assets
+    event.respondWith(
+      caches.match(request).then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(request).then((response) => {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
         });
       })
     );
   }
 });
 
-// Push event - handle push notifications
-self.addEventListener('push', (event) => {
-  console.log('[SW] Push received');
-  
-  let data = {
-    title: 'Fins',
-    body: 'Você tem uma nova notificação',
-    icon: '/icons/notification-icon.png',
-    badge: '/icons/badge-icon.png',
-    tag: 'fins-notification',
-    requireInteraction: false,
-    data: {},
-    actions: [],
-  };
-  
-  if (event.data) {
-    try {
-      data = { ...data, ...event.data.json() };
-    } catch (e) {
-      data.body = event.data.text();
-    }
+// Sincronização em background
+self.addEventListener('sync', (event) => {
+  console.log('[SW] Background sync:', event.tag);
+  if (event.tag === 'sync-transactions') {
+    event.waitUntil(syncTransactions());
   }
-  
+});
+
+async function syncTransactions() {
+  // Implementar sincronização de transações offline
+  console.log('[SW] Sincronizando transações...');
+}
+
+// Push notifications
+self.addEventListener('push', (event) => {
   const options = {
-    body: data.body,
-    icon: data.icon,
-    badge: data.badge,
-    tag: data.tag,
-    requireInteraction: data.requireInteraction,
-    data: data.data,
-    actions: data.actions,
-    vibrate: [200, 100, 200],
-    renotify: true,
+    body: event.data?.text() || 'Nova notificação do Fins',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-72.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1,
+    },
+    actions: [
+      { action: 'open', title: 'Abrir' },
+      { action: 'close', title: 'Fechar' },
+    ],
   };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+
+  event.waitUntil(self.registration.showNotification('Fins', options));
 });
 
-// Notification click event
+// Clique na notificação
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked');
-  
   event.notification.close();
-  
-  const action = event.action;
-  const data = event.notification.data;
-  
-  // Abrir a aplicação
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Tentar focar uma janela existente
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      // Abrir nova janela se nenhuma existir
-      if (clients.openWindow) {
-        const url = data?.url || '/';
-        return clients.openWindow(url);
-      }
-    })
-  );
-});
-
-// Notification close event
-self.addEventListener('notificationclose', (event) => {
-  console.log('[SW] Notification closed', event.notification.tag);
+  if (event.action === 'open') {
+    event.waitUntil(clients.openWindow('/'));
+  }
 });

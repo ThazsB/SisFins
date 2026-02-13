@@ -9,336 +9,552 @@
  * - Responsividade garantida
  */
 
-@layer components {
-  /* ============================================
-     BASE CARD - Estrutura fundamental
-     ============================================ */
-  .card-base {
-    @apply relative flex items-center justify-between p-3 sm:p-4 rounded-lg border transition-all duration-200;
-    @apply bg-card border-border;
-  }
+/* ============================================
+   BASE CARD - Estrutura fundamental
+   ============================================ */
+.card-base {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  transition: all 200ms;
+  background-color: rgba(var(--card));
+  border-color: rgba(var(--border));
+}
 
-  .card-base:hover {
-    @apply border-border/80 shadow-sm;
-  }
+.card-base:hover {
+  border-color: rgba(var(--border), 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
-  .card-base:focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
-  }
+.card-base:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(var(--background)),
+    0 0 0 4px rgba(var(--primary));
+}
 
-  /* ============================================
-     TRANSACTION CARD - Cards de transação
-     ============================================ */
+/* ============================================
+   TRANSACTION CARD - Cards de transação
+   ============================================ */
+.card-transaction {
+  min-height: 80px;
+  box-shadow: none;
+}
+
+.card-transaction:hover {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Variantes por tipo de transação */
+.card-transaction--income {
+  border-left-width: 4px;
+  border-left-color: rgb(34 197 94);
+}
+
+.card-transaction--expense {
+  border-left-width: 4px;
+  border-left-color: rgb(249 115 22);
+}
+
+.card-transaction--neutral {
+  border-left-width: 4px;
+  border-left-color: rgba(var(--muted-foreground), 0.3);
+}
+
+/* Estado selecionado */
+.card-transaction--selected {
+  background-color: rgba(var(--primary), 0.05);
+  border-color: rgba(var(--primary), 0.5);
+  box-shadow: 0 0 0 1px rgba(var(--primary), 0.3);
+}
+
+/* Estado desabilitado */
+.card-transaction--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   CARD CONTENT - Estrutura interna
+   ============================================ */
+.card-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .card-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+.card-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.card-title {
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(var(--foreground));
+}
+
+@media (min-width: 640px) {
+  .card-title {
+    font-size: 1rem;
+  }
+}
+
+.card-meta {
+  font-size: 0.75rem;
+  color: rgba(var(--muted-foreground));
+  display: flex;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.125rem;
+}
+
+@media (min-width: 640px) {
+  .card-meta {
+    font-size: 0.875rem;
+    gap: 0.5rem 1rem;
+  }
+}
+
+.card-meta-separator {
+  flex-shrink: 0;
+  color: rgba(var(--muted-foreground), 0.5);
+}
+
+/* ============================================
+   CARD ACTIONS - Botões de ação
+   ============================================ */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .card-actions {
+    gap: 0.5rem 1rem;
+  }
+}
+
+.card-action-btn {
+  padding: 0.375rem 0.5rem;
+  border-radius: 9999px;
+  transition: all 200ms;
+  color: rgba(var(--muted-foreground));
+}
+
+@media (min-width: 640px) {
+  .card-action-btn {
+    padding: 0.5rem 1rem;
+  }
+}
+
+.card-action-btn:hover {
+  color: rgba(var(--foreground));
+  background-color: rgba(var(--muted));
+}
+
+.card-action-btn--danger:hover {
+  color: rgb(239 68 68);
+  background-color: rgba(239 68 68, 0.1);
+}
+
+.card-action-btn--primary:hover {
+  color: rgba(var(--primary));
+  background-color: rgba(var(--primary), 0.1);
+}
+
+/* ============================================
+   CARD AMOUNT - Valores monetários
+   ============================================ */
+.card-amount {
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .card-amount {
+    font-size: 1rem;
+  }
+}
+
+.card-amount--income {
+  color: rgb(34 197 94);
+}
+
+.card-amount--expense {
+  color: rgb(249 115 22);
+}
+
+.card-amount--neutral {
+  color: rgba(var(--foreground));
+}
+
+/* ============================================
+   BANK ACCOUNT CARD - Contas bancárias
+   ============================================ */
+.card-account {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.card-account__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.card-account__info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-account__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-account__details {
+  min-width: 0;
+  flex: 1;
+}
+
+.card-account__name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .card-account__name {
+    font-size: 1rem;
+  }
+}
+
+.card-account__type {
+  font-size: 0.75rem;
+  color: rgba(var(--muted-foreground));
+}
+
+@media (min-width: 640px) {
+  .card-account__type {
+    font-size: 0.875rem;
+  }
+}
+
+.card-account__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(var(--border), 0.5);
+}
+
+/* ============================================
+   STATUS BADGES - Indicadores de status
+   ============================================ */
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge--active {
+  background-color: rgb(220 252 231);
+  color: rgb(21 128 61);
+}
+
+.dark .status-badge--active {
+  background-color: rgba(22 101 52, 0.5);
+  color: rgb(134 239 172);
+}
+
+.status-badge--error {
+  background-color: rgb(254 226 226);
+  color: rgb(185 28 28);
+}
+
+.dark .status-badge--error {
+  background-color: rgba(153 27 27, 0.5);
+  color: rgb(252 129 129);
+}
+
+.status-badge--warning {
+  background-color: rgb(254 249 195);
+  color: rgb(161 98 7);
+}
+
+.dark .status-badge--warning {
+  background-color: rgba(161 98 7, 0.5);
+  color: rgb(253 224 71);
+}
+
+.status-badge--info {
+  background-color: rgb(219 234 254);
+  color: rgb(29 78 216);
+}
+
+.dark .status-badge--info {
+  background-color: rgba(29 78 216, 0.5);
+  color: rgb(147 197 253);
+}
+
+.status-badge--neutral {
+  background-color: rgba(var(--muted));
+  color: rgba(var(--muted-foreground));
+}
+
+/* ============================================
+   COMPACT CARD - Versão compacta
+   ============================================ */
+.card-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.card-compact:hover {
+  background-color: rgba(var(--muted), 0.5);
+  transition: background-color 150ms;
+}
+
+.card-compact__content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.card-compact__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-compact__title {
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(var(--muted-foreground));
+}
+
+.card-compact__amount {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ============================================
+   EMPTY STATE - Estado vazio
+   ============================================ */
+.empty-state {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+@media (min-width: 640px) {
+  .empty-state {
+    padding: 3rem 0;
+  }
+}
+
+.empty-state__icon {
+  width: 3rem;
+  height: 3rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--muted));
+  color: rgba(var(--muted-foreground));
+}
+
+@media (min-width: 640px) {
+  .empty-state__icon {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+
+.empty-state__title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(var(--foreground));
+}
+
+@media (min-width: 640px) {
+  .empty-state__title {
+    font-size: 1.125rem;
+  }
+}
+
+.empty-state__description {
+  font-size: 0.875rem;
+  color: rgba(var(--muted-foreground));
+  margin-top: 0.25rem;
+}
+
+/* ============================================
+   SKELETON LOADING - Estados de carregamento
+   ============================================ */
+.card-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(var(--border), 0.5);
+  background-color: rgba(197, 197, 197, 0.5);
+}
+
+@media (min-width: 640px) {
+  .card-skeleton {
+    gap: 1rem 1.5rem;
+    padding: 1rem 1.5rem;
+  }
+}
+
+.card-skeleton__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: rgba(var(--muted));
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .card-skeleton__icon {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+.card-skeleton__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.card-skeleton__title {
+  height: 1rem;
+  width: 75%;
+  background-color: rgba(var(--muted));
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-radius: 0.25rem;
+}
+
+.card-skeleton__meta {
+  height: 0.75rem;
+  width: 50%;
+  background-color: rgba(var(--muted));
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-radius: 0.25rem;
+}
+
+.card-skeleton__amount {
+  height: 1rem;
+  width: 5rem;
+  background-color: rgba(var(--muted));
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+@media (max-width: 640px) {
   .card-transaction {
-    @apply card-base min-h-[80px];
-    @apply hover:shadow-md;
-  }
-
-  /* Variantes por tipo de transação */
-  .card-transaction--income {
-    @apply border-l-4 border-l-green-500;
-  }
-
-  .card-transaction--expense {
-    @apply border-l-4 border-l-orange-500;
-  }
-
-  .card-transaction--neutral {
-    @apply border-l-4 border-l-muted-foreground/30;
-  }
-
-  /* Estado selecionado */
-  .card-transaction--selected {
-    @apply bg-primary/5 border-primary/50 ring-1 ring-primary/30;
-  }
-
-  /* Estado desabilitado */
-  .card-transaction--disabled {
-    @apply opacity-50 cursor-not-allowed pointer-events-none;
-  }
-
-  /* ============================================
-     CARD CONTENT - Estrutura interna
-     ============================================ */
-  .card-content {
-    @apply flex items-center gap-3 sm:gap-4 min-w-0 flex-1;
+    padding: 0.75rem;
   }
 
   .card-icon {
-    @apply w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0;
-    @apply transition-transform duration-200;
-  }
-
-  .card-transaction:hover .card-icon {
-    @apply scale-105;
-  }
-
-  .card-info {
-    @apply min-w-0 flex-1;
+    width: 2.25rem;
+    height: 2.25rem;
   }
 
   .card-title {
-    @apply font-medium text-sm sm:text-base truncate text-foreground;
-    @apply leading-tight;
+    font-size: 0.875rem;
   }
 
   .card-meta {
-    @apply text-xs sm:text-sm text-muted-foreground flex items-center gap-1 sm:gap-2 mt-0.5;
+    font-size: 0.75rem;
   }
 
-  .card-meta-separator {
-    @apply flex-shrink-0 text-muted-foreground/50;
-  }
-
-  /* ============================================
-     CARD ACTIONS - Botões de ação
-     ============================================ */
-  .card-actions {
-    @apply flex items-center gap-1 sm:gap-2 flex-shrink-0;
+  .card-amount {
+    font-size: 0.875rem;
   }
 
   .card-action-btn {
-    @apply p-1.5 sm:p-2 rounded-full transition-all duration-200;
-    @apply text-muted-foreground hover:text-foreground hover:bg-muted;
-  }
-
-  .card-action-btn--danger {
-    @apply hover:text-red-500 hover:bg-red-500/10;
-  }
-
-  .card-action-btn--primary {
-    @apply hover:text-primary hover:bg-primary/10;
-  }
-
-  /* ============================================
-     CARD AMOUNT - Valores monetários
-     ============================================ */
-  .card-amount {
-    @apply font-bold text-sm sm:text-base whitespace-nowrap;
-  }
-
-  .card-amount--income {
-    @apply text-green-500;
-  }
-
-  .card-amount--expense {
-    @apply text-orange-500;
-  }
-
-  .card-amount--neutral {
-    @apply text-foreground;
-  }
-
-  /* ============================================
-     BANK ACCOUNT CARD - Contas bancárias
-     ============================================ */
-  .card-account {
-    @apply card-base flex-col items-stretch gap-3;
-  }
-
-  .card-account__header {
-    @apply flex items-start justify-between gap-3;
-  }
-
-  .card-account__info {
-    @apply flex items-center gap-3 flex-1 min-w-0;
-  }
-
-  .card-account__icon {
-    @apply w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0;
-  }
-
-  .card-account__details {
-    @apply min-w-0 flex-1;
-  }
-
-  .card-account__name {
-    @apply font-medium text-sm sm:text-base truncate;
-  }
-
-  .card-account__type {
-    @apply text-xs sm:text-sm text-muted-foreground;
-  }
-
-  .card-account__footer {
-    @apply flex items-center justify-between pt-3 border-t border-border/50;
-  }
-
-  /* ============================================
-     STATUS BADGES - Indicadores de status
-     ============================================ */
-  .status-badge {
-    @apply px-2 py-0.5 rounded-full text-xs font-medium;
-  }
-
-  .status-badge--active {
-    @apply bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300;
-  }
-
-  .status-badge--error {
-    @apply bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300;
-  }
-
-  .status-badge--warning {
-    @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300;
-  }
-
-  .status-badge--info {
-    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300;
-  }
-
-  .status-badge--neutral {
-    @apply bg-muted text-muted-foreground;
-  }
-
-  /* ============================================
-     COMPACT CARD - Versão compacta
-     ============================================ */
-  .card-compact {
-    @apply flex items-center justify-between py-2 px-3 rounded-md;
-    @apply hover:bg-muted/50 transition-colors;
-  }
-
-  .card-compact__content {
-    @apply flex items-center gap-2 min-w-0 flex-1;
-  }
-
-  .card-compact__icon {
-    @apply w-6 h-6 flex items-center justify-center flex-shrink-0;
-  }
-
-  .card-compact__title {
-    @apply text-sm truncate text-muted-foreground;
-  }
-
-  .card-compact__amount {
-    @apply text-sm font-medium whitespace-nowrap;
-  }
-
-  /* ============================================
-     EMPTY STATE - Estado vazio
-     ============================================ */
-  .empty-state {
-    @apply text-center py-8 sm:py-12;
-  }
-
-  .empty-state__icon {
-    @apply w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full flex items-center justify-center;
-    @apply bg-muted text-muted-foreground;
-  }
-
-  .empty-state__title {
-    @apply text-base sm:text-lg font-medium text-foreground;
-  }
-
-  .empty-state__description {
-    @apply text-sm text-muted-foreground mt-1;
-  }
-
-  /* ============================================
-     SKELETON LOADING - Estados de carregamento
-     ============================================ */
-  .card-skeleton {
-    @apply flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-border/50;
-    background-color: rgba(197, 197, 197, 0.5);
-  }
-
-  .card-skeleton__icon {
-    @apply w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted animate-pulse flex-shrink-0;
-  }
-
-  .card-skeleton__content {
-    @apply flex-1 space-y-2 min-w-0;
-  }
-
-  .card-skeleton__title {
-    @apply h-4 w-3/4 bg-muted animate-pulse rounded;
-  }
-
-  .card-skeleton__meta {
-    @apply h-3 w-1/2 bg-muted animate-pulse rounded;
-  }
-
-  .card-skeleton__amount {
-    @apply h-4 w-20 bg-muted animate-pulse rounded flex-shrink-0;
-  }
-
-  /* ============================================
-     RESPONSIVE UTILITIES
-     ============================================ */
-  @media (max-width: 640px) {
-    .card-transaction {
-      @apply p-3;
-    }
-
-    .card-icon {
-      @apply w-9 h-9;
-    }
-
-    .card-title {
-      @apply text-sm;
-    }
-
-    .card-meta {
-      @apply text-xs;
-    }
-
-    .card-amount {
-      @apply text-sm;
-    }
-
-    .card-action-btn {
-      @apply p-1.5;
-    }
-  }
-
-  /* ============================================
-     ANIMATIONS
-     ============================================ */
-  @keyframes card-enter {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .card-animate-enter {
-    animation: card-enter 0.3s ease-out forwards;
-  }
-
-  /* Stagger animation para listas */
-  .card-list > *:nth-child(1) {
-    animation-delay: 0ms;
-  }
-  .card-list > *:nth-child(2) {
-    animation-delay: 50ms;
-  }
-  .card-list > *:nth-child(3) {
-    animation-delay: 100ms;
-  }
-  .card-list > *:nth-child(4) {
-    animation-delay: 150ms;
-  }
-  .card-list > *:nth-child(5) {
-    animation-delay: 200ms;
-  }
-  .card-list > *:nth-child(6) {
-    animation-delay: 250ms;
-  }
-  .card-list > *:nth-child(7) {
-    animation-delay: 300ms;
-  }
-  .card-list > *:nth-child(8) {
-    animation-delay: 350ms;
-  }
-  .card-list > *:nth-child(9) {
-    animation-delay: 400ms;
-  }
-  .card-list > *:nth-child(10) {
-    animation-delay: 450ms;
+    padding: 0.375rem;
   }
 }
